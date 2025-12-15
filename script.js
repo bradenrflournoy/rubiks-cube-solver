@@ -101,6 +101,12 @@ function tileChange(tile, face, i){
     }
 }
 
+const ROT180 = [4,5,6,7,0,1,2,3];
+
+// In the net with B below D, these two look correct:
+const UI_TO_B = ROT180;
+const UI_TO_D = [0,1,2,3,4,5,6,7]; // identity
+
 //  Cube display button elements
 var F0 = document.getElementById("F0");
 F0.onclick = () => {
@@ -136,35 +142,35 @@ F7.onclick = () => {
 }
 var B0 = document.getElementById("B0");
 B0.onclick = () => {
-    tileChange(B0, bFace, 0);
+    tileChange(B0, bFace, UI_TO_B[0]);
 }
 var B1 = document.getElementById("B1");
 B1.onclick = () => {
-    tileChange(B1, bFace, 1);
+    tileChange(B1, bFace, UI_TO_B[1]);
 }
 var B2 = document.getElementById("B2");
 B2.onclick = () => {
-    tileChange(B2, bFace, 2);
+    tileChange(B2, bFace, UI_TO_B[2]);
 }
 var B3 = document.getElementById("B3");
 B3.onclick = () => {
-    tileChange(B3, bFace, 3);
+    tileChange(B3, bFace, UI_TO_B[3]);
 }
 var B4 = document.getElementById("B4");
 B4.onclick = () => {
-    tileChange(B4, bFace, 4);
+    tileChange(B4, bFace, UI_TO_B[4]);
 }
 var B5 = document.getElementById("B5");
 B5.onclick = () => {
-    tileChange(B5, bFace, 5);
+    tileChange(B5, bFace, UI_TO_B[5]);
 }
 var B6 = document.getElementById("B6");
 B6.onclick = () => {
-    tileChange(B6, bFace, 6);
+    tileChange(B6, bFace, UI_TO_B[6]);
 }
 var B7 = document.getElementById("B7");
 B7.onclick = () => {
-    tileChange(B7, bFace, 7);
+    tileChange(B7, bFace, UI_TO_B[7]);
 }
 var U0 = document.getElementById("U0");
 U0.onclick = () => {
@@ -200,35 +206,35 @@ U7.onclick = () => {
 }
 var D0 = document.getElementById("D0");
 D0.onclick = () => {
-    tileChange(D0, dFace, 0);
+    tileChange(D0, dFace, UI_TO_D[0]);
 }
 var D1 = document.getElementById("D1");
 D1.onclick = () => {
-    tileChange(D1, dFace, 1);
+    tileChange(D1, dFace, UI_TO_D[1]);
 }
 var D2 = document.getElementById("D2");
 D2.onclick = () => {
-    tileChange(D2, dFace, 2);
+    tileChange(D2, dFace, UI_TO_D[2]);
 }
 var D3 = document.getElementById("D3");
 D3.onclick = () => {
-    tileChange(D3, dFace, 3);
+    tileChange(D3, dFace, UI_TO_D[3]);
 }
 var D4 = document.getElementById("D4");
 D4.onclick = () => {
-    tileChange(D4, dFace, 4);
+    tileChange(D4, dFace, UI_TO_D[4]);
 }
 var D5 = document.getElementById("D5");
 D5.onclick = () => {
-    tileChange(D5, dFace, 5);
+    tileChange(D5, dFace, UI_TO_D[5]);
 }
 var D6 = document.getElementById("D6");
 D6.onclick = () => {
-    tileChange(D6, dFace, 6);
+    tileChange(D6, dFace, UI_TO_D[6]);
 }
 var D7 = document.getElementById("D7");
 D7.onclick = () => {
-    tileChange(D7, dFace, 7);
+    tileChange(D7, dFace, UI_TO_D[7]);
 }
 var L0 = document.getElementById("L0");
 L0.onclick = () => {
@@ -361,261 +367,202 @@ var executeButton = document.createElement("button");
     executeButton.style.backgroundColor = "lightblue";
     controls.appendChild(executeButton);
 
-//  Shift functions for clockwise turns
-function fNTurn(){
-    var removed = fFace.pop();
-    fFace.unshift(removed);
-    removed = fFace.pop();
-    fFace.unshift(removed);
-    var s1 = uFace[6];
-    var s2 = uFace[5];
-    var s3 = uFace[4];
-    uFace[6] = lFace[4];
-    uFace[5] = lFace[3];
-    uFace[4] = lFace[2];
-    lFace[4] = dFace[2];
-    lFace[3] = dFace[1];
-    lFace[2] = dFace[0];
-    dFace[2] = rFace[0];
-    dFace[1] = rFace[7];
-    dFace[0] = rFace[6];
-    rFace[0] = s1;
-    rFace[7] = s2;
-    rFace[6] = s3;
+// ----------------------------
+// Face ring index <-> (row,col)
+// ring layout in your HTML is:
+// 0 1 2
+// 7 C 3
+// 6 5 4
+// ----------------------------
+function ringToRC(i) {
+  switch (i) {
+    case 0: return [0,0];
+    case 1: return [0,1];
+    case 2: return [0,2];
+    case 3: return [1,2];
+    case 4: return [2,2];
+    case 5: return [2,1];
+    case 6: return [2,0];
+    case 7: return [1,0];
+    default: throw new Error("bad ring index " + i);
+  }
 }
-function bNTurn(){
-    var removed = bFace.pop();
-    bFace.unshift(removed);
-    removed = bFace.pop();
-    bFace.unshift(removed);
-    var s1 = uFace[2];
-    var s2 = uFace[1];
-    var s3 = uFace[0];
-    uFace[2] = rFace[4];
-    uFace[1] = rFace[3];
-    uFace[0] = rFace[2];
-    rFace[4] = dFace[6];
-    rFace[3] = dFace[5];
-    rFace[2] = dFace[4];
-    dFace[6] = lFace[0];
-    dFace[5] = lFace[7];
-    dFace[4] = lFace[6];
-    lFace[0] = s1;
-    lFace[7] = s2;
-    lFace[6] = s3;
-}
-function uNTurn(){
-    var removed = uFace.pop();
-    uFace.unshift(removed);
-    removed = uFace.pop();
-    uFace.unshift(removed);
-    var s1 = bFace[2];
-    var s2 = bFace[1];
-    var s3 = bFace[0];
-    bFace[2] = lFace[2];
-    bFace[1] = lFace[1];
-    bFace[0] = lFace[0];
-    lFace[2] = fFace[2];
-    lFace[1] = fFace[1];
-    lFace[0] = fFace[0];
-    fFace[2] = rFace[2];
-    fFace[1] = rFace[1];
-    fFace[0] = rFace[0];
-    rFace[2] = s1;
-    rFace[1] = s2;
-    rFace[0] = s3;
-}
-function dNTurn(){
-    var removed = dFace.pop();
-    dFace.unshift(removed);
-    removed = dFace.pop();
-    dFace.unshift(removed);
-    var s1 = fFace[6];
-    var s2 = fFace[5];
-    var s3 = fFace[4];
-    fFace[6] = lFace[6];
-    fFace[5] = lFace[5];
-    fFace[4] = lFace[4];
-    lFace[6] = bFace[6];
-    lFace[5] = bFace[5];
-    lFace[4] = bFace[4];
-    bFace[6] = rFace[6];
-    bFace[5] = rFace[5];
-    bFace[4] = rFace[4];
-    rFace[6] = s1;
-    rFace[5] = s2;
-    rFace[4] = s3;
-}
-function lNTurn(){
-    var removed = lFace.pop();
-    lFace.unshift(removed);
-    removed = lFace.pop();
-    lFace.unshift(removed);
-    var s1 = uFace[0];
-    var s2 = uFace[7];
-    var s3 = uFace[6];
-    uFace[0] = bFace[4];
-    uFace[7] = bFace[3];
-    uFace[6] = bFace[2];
-    bFace[4] = dFace[0];
-    bFace[3] = dFace[7];
-    bFace[2] = dFace[6];
-    dFace[0] = fFace[0];
-    dFace[7] = fFace[7];
-    dFace[6] = fFace[6];
-    fFace[0] = s1;
-    fFace[7] = s2;
-    fFace[6] = s3;
-}
-function rNTurn(){
-    var removed = rFace.pop();
-    rFace.unshift(removed);
-    removed = rFace.pop();
-    rFace.unshift(removed);
-    var s1 = uFace[4];
-    var s2 = uFace[3];
-    var s3 = uFace[2];
-    uFace[4] = fFace[4];
-    uFace[3] = fFace[3];
-    uFace[2] = fFace[2];
-    fFace[4] = dFace[4];
-    fFace[3] = dFace[3];
-    fFace[2] = dFace[2];
-    dFace[4] = bFace[0];
-    dFace[3] = bFace[7];
-    dFace[2] = bFace[6];
-    bFace[0] = s1;
-    bFace[7] = s2;
-    bFace[6] = s3;
+function rcToRing(r,c) {
+  if (r===0 && c===0) return 0;
+  if (r===0 && c===1) return 1;
+  if (r===0 && c===2) return 2;
+  if (r===1 && c===2) return 3;
+  if (r===2 && c===2) return 4;
+  if (r===2 && c===1) return 5;
+  if (r===2 && c===0) return 6;
+  if (r===1 && c===0) return 7;
+  throw new Error(`bad rc (${r},${c}) for ring`);
 }
 
-//  Shift functions for counterclockwise turns
-function fPTurn(){
-    var removed = fFace.shift();
-    fFace.push(removed);
-    removed = fFace.shift();
-    fFace.push(removed);
-    var s1 = uFace[6];
-    var s2 = uFace[5];
-    var s3 = uFace[4];
-    uFace[6] = rFace[0];
-    uFace[5] = rFace[7];
-    uFace[4] = rFace[6];
-    rFace[0] = dFace[2];
-    rFace[7] = dFace[1];
-    rFace[6] = dFace[0];
-    dFace[2] = lFace[4];
-    dFace[1] = lFace[3];
-    dFace[0] = lFace[2];
-    lFace[4] = s1;
-    lFace[3] = s2;
-    lFace[2] = s3;
+function getFaceArr(face) {
+  switch (face) {
+    case "U": return uFace;
+    case "D": return dFace;
+    case "F": return fFace;
+    case "B": return bFace;
+    case "L": return lFace;
+    case "R": return rFace;
+    default: throw new Error("bad face " + face);
+  }
 }
-function bPTurn(){
-    var removed = bFace.shift();
-    bFace.push(removed);
-    removed = bFace.shift();
-    bFace.push(removed);
-    var s1 = uFace[2];
-    var s2 = uFace[1];
-    var s3 = uFace[0];
-    uFace[2] = lFace[0];
-    uFace[1] = lFace[7];
-    uFace[0] = lFace[6];
-    lFace[0] = dFace[6];
-    lFace[7] = dFace[5];
-    lFace[6] = dFace[4];
-    dFace[6] = rFace[4];
-    dFace[5] = rFace[3];
-    dFace[4] = rFace[2];
-    rFace[4] = s1;
-    rFace[3] = s2;
-    rFace[2] = s3;
+
+function rotateRingCW(faceArr) {
+  // A 3x3 cw rotation maps ring indices by +2 steps in your ring order
+  // Your original did pop/unshift twice; this is the same but explicit.
+  const old = faceArr.slice();
+  for (let i = 0; i < 8; i++) {
+    faceArr[(i + 2) % 8] = old[i];
+  }
 }
-function uPTurn(){
-    var removed = uFace.shift();
-    uFace.push(removed);
-    removed = uFace.shift();
-    uFace.push(removed);
-    var s1 = bFace[2];
-    var s2 = bFace[1];
-    var s3 = bFace[0];
-    bFace[2] = rFace[2];
-    bFace[1] = rFace[1];
-    bFace[0] = rFace[0];
-    rFace[2] = fFace[2];
-    rFace[1] = fFace[1];
-    rFace[0] = fFace[0];
-    fFace[2] = lFace[2];
-    fFace[1] = lFace[1];
-    fFace[0] = lFace[0];
-    lFace[2] = s1;
-    lFace[1] = s2;
-    lFace[0] = s3;
+function rotateRingCCW(faceArr) {
+  const old = faceArr.slice();
+  for (let i = 0; i < 8; i++) {
+    faceArr[(i + 6) % 8] = old[i]; // -2 mod 8
+  }
 }
-function dPTurn(){
-    var removed = dFace.shift();
-    dFace.push(removed);
-    removed = dFace.shift();
-    dFace.push(removed);
-    var s1 = fFace[6];
-    var s2 = fFace[5];
-    var s3 = fFace[4];
-    fFace[6] = rFace[6];
-    fFace[5] = rFace[5];
-    fFace[4] = rFace[4];
-    rFace[6] = bFace[6];
-    rFace[5] = bFace[5];
-    rFace[4] = bFace[4];
-    bFace[6] = lFace[6];
-    bFace[5] = lFace[5];
-    bFace[4] = lFace[4];
-    lFace[6] = s1;
-    lFace[5] = s2;
-    lFace[4] = s3;
+
+// ----------------------------
+// Geometry mapping:
+// Global axes: X right, Y up, Z front
+// Each sticker is on a face normal +/-X +/-Y +/-Z
+// with 3x3 coordinates x,y,z in {-1,0,1} and one axis fixed at +/-1.
+// ----------------------------
+function faceletToXYZ(face, ringIdx) {
+  const [r,c] = ringToRC(ringIdx);
+  const x = c - 1;
+  const y = 1 - r;
+
+  if (face === "F") return { p: [x, y,  1], n: [0,0, 1] };
+  if (face === "B") return { p: [-x, y, -1], n: [0,0,-1] };
+  if (face === "U") return { p: [x,  1, r - 1], n: [0, 1,0] }; // z = row-1
+  if (face === "D") return { p: [x, -1, 1 - r], n: [0,-1,0] }; // z = 1-row
+  if (face === "R") return { p: [ 1, y, 1 - c], n: [ 1,0,0] }; // z = 1-col
+  if (face === "L") return { p: [-1, y, c - 1], n: [-1,0,0] }; // z = col-1
+
+  throw new Error("bad face " + face);
 }
-function lPTurn(){
-    var removed = lFace.shift();
-    lFace.push(removed);
-    removed = lFace.shift();
-    lFace.push(removed);
-    var s1 = uFace[0];
-    var s2 = uFace[7];
-    var s3 = uFace[6];
-    uFace[0] = fFace[0];
-    uFace[7] = fFace[7];
-    uFace[6] = fFace[6];
-    fFace[0] = dFace[0];
-    fFace[7] = dFace[7];
-    fFace[6] = dFace[6];
-    dFace[0] = bFace[4];
-    dFace[7] = bFace[3];
-    dFace[6] = bFace[2];
-    bFace[4] = s1;
-    bFace[3] = s2;
-    bFace[2] = s3;
+
+function xyzToFacelet(p, n) {
+  const [x,y,z] = p;
+  const [nx,ny,nz] = n;
+
+  let face;
+  if (nz ===  1) face = "F";
+  else if (nz === -1) face = "B";
+  else if (ny ===  1) face = "U";
+  else if (ny === -1) face = "D";
+  else if (nx ===  1) face = "R";
+  else if (nx === -1) face = "L";
+  else throw new Error("bad normal " + n);
+
+  let r,c;
+  if (face === "F") { r = 1 - y; c = x + 1; }
+  else if (face === "B") { r = 1 - y; c = 1 - x; } // invert back mapping
+  else if (face === "U") { r = z + 1; c = x + 1; }
+  else if (face === "D") { r = 1 - z; c = x + 1; }
+  else if (face === "R") { r = 1 - y; c = 1 - z; }
+  else if (face === "L") { r = 1 - y; c = z + 1; }
+
+  // center not stored in arrays
+  if (r === 1 && c === 1) return null;
+
+  return { face, ringIdx: rcToRing(r,c) };
 }
-function rPTurn(){
-    var removed = rFace.shift();
-    rFace.push(removed);
-    removed = rFace.shift();
-    rFace.push(removed);
-    var s1 = uFace[4];
-    var s2 = uFace[3];
-    var s3 = uFace[2];
-    uFace[4] = bFace[0];
-    uFace[3] = bFace[7];
-    uFace[2] = bFace[6];
-    bFace[0] = dFace[4];
-    bFace[7] = dFace[3];
-    bFace[6] = dFace[2];
-    dFace[4] = fFace[4];
-    dFace[3] = fFace[3];
-    dFace[2] = fFace[2];
-    fFace[4] = s1;
-    fFace[3] = s2;
-    fFace[2] = s3;
+
+function rot90AboutX([x,y,z]) { return [x, z, -y]; }  // +90
+function rot90AboutY([x,y,z]) { return [z, y, -x]; }  // +90
+function rot90AboutZ([x,y,z]) { return [y, -x, z]; }  // +90
+function rotN90AboutX([x,y,z]) { return [x, -z, y]; } // -90
+function rotN90AboutY([x,y,z]) { return [-z, y, x]; } // -90
+function rotN90AboutZ([x,y,z]) { return [-y, x, z]; } // -90
+
+function rotateVec90(v, axis, dir) {
+  // dir: +1 means +90 (RH), -1 means -90
+  if (axis === "X") return dir === 1 ? rot90AboutX(v) : rotN90AboutX(v);
+  if (axis === "Y") return dir === 1 ? rot90AboutY(v) : rotN90AboutY(v);
+  if (axis === "Z") return dir === 1 ? rot90AboutZ(v) : rotN90AboutZ(v);
+  throw new Error("bad axis " + axis);
 }
+
+// Move definition: axis + layer value (+/-1) + dir for clockwise-from-outside view
+// Clockwise-from-outside corresponds to -90 around the face normal.
+// For faces with normal negative, that flips sign.
+const MOVE_DEF = {
+  "F": { axis:"Z", layer:  1, dir: -1 },
+  "B": { axis:"Z", layer: -1, dir:  1 },
+  "U": { axis:"Y", layer:  1, dir: -1 },
+  "D": { axis:"Y", layer: -1, dir:  1 },
+  "R": { axis:"X", layer:  1, dir: -1 },
+  "L": { axis:"X", layer: -1, dir:  1 },
+};
+
+function applyQuarterTurn(faceChar, clockwise=true) {
+  const { axis, layer, dir } = MOVE_DEF[faceChar];
+  const turnDir = clockwise ? dir : -dir;
+
+  // snapshot all stickers
+  const stickers = [];
+  for (const face of ["U","D","F","B","L","R"]) {
+    const arr = getFaceArr(face);
+    for (let i = 0; i < 8; i++) {
+      const col = arr[i];
+      const { p, n } = faceletToXYZ(face, i);
+      stickers.push({ face, i, col, p, n });
+    }
+  }
+
+  // clear target faces (we'll refill)
+  const next = {
+    U: new Array(8),
+    D: new Array(8),
+    F: new Array(8),
+    B: new Array(8),
+    L: new Array(8),
+    R: new Array(8),
+  };
+
+  // rotate those on the layer, keep others fixed
+  for (const s of stickers) {
+    const coord = axis === "X" ? s.p[0] : axis === "Y" ? s.p[1] : s.p[2];
+    let p2 = s.p;
+    let n2 = s.n;
+
+    if (coord === layer) {
+      p2 = rotateVec90(p2, axis, turnDir);
+      n2 = rotateVec90(n2, axis, turnDir);
+    }
+
+    const dest = xyzToFacelet(p2, n2);
+    if (!dest) continue;
+    next[dest.face][dest.ringIdx] = s.col;
+  }
+
+  // copy next back to your arrays
+  uFace = next.U; dFace = next.D; fFace = next.F; bFace = next.B; lFace = next.L; rFace = next.R;
+
+  // rotate the turning face itself ring-wise (optional but keeps it consistent if any center assumptions later)
+  // Not strictly necessary because geometry already did it, but harmless to ensure.
+  // (Do NOT do both; geometry already handled. So we skip.)
+}
+
+// Wrappers keeping your existing function names
+function fNTurn(){ applyQuarterTurn("F", true); }
+function fPTurn(){ applyQuarterTurn("F", false); }
+function bNTurn(){ applyQuarterTurn("B", true); }
+function bPTurn(){ applyQuarterTurn("B", false); }
+function uNTurn(){ applyQuarterTurn("U", true); }
+function uPTurn(){ applyQuarterTurn("U", false); }
+function dNTurn(){ applyQuarterTurn("D", true); }
+function dPTurn(){ applyQuarterTurn("D", false); }
+function lNTurn(){ applyQuarterTurn("L", true); }
+function lPTurn(){ applyQuarterTurn("L", false); }
+function rNTurn(){ applyQuarterTurn("R", true); }
+function rPTurn(){ applyQuarterTurn("R", false); }
 
 //  When clicked, turn occurs
 fNTurnButton.onclick = function(){
@@ -1475,14 +1422,14 @@ function updateCubeDisplay(){
     F5.style.backgroundColor = fFace[5];
     F6.style.backgroundColor = fFace[6];
     F7.style.backgroundColor = fFace[7];
-    B0.style.backgroundColor = bFace[0];
-    B1.style.backgroundColor = bFace[1];
-    B2.style.backgroundColor = bFace[2];
-    B3.style.backgroundColor = bFace[3];
-    B4.style.backgroundColor = bFace[4];
-    B5.style.backgroundColor = bFace[5];
-    B6.style.backgroundColor = bFace[6];
-    B7.style.backgroundColor = bFace[7];
+    B0.style.backgroundColor = bFace[UI_TO_B[0]];
+    B1.style.backgroundColor = bFace[UI_TO_B[1]];
+    B2.style.backgroundColor = bFace[UI_TO_B[2]];
+    B3.style.backgroundColor = bFace[UI_TO_B[3]];
+    B4.style.backgroundColor = bFace[UI_TO_B[4]];
+    B5.style.backgroundColor = bFace[UI_TO_B[5]];
+    B6.style.backgroundColor = bFace[UI_TO_B[6]];
+    B7.style.backgroundColor = bFace[UI_TO_B[7]];
     U0.style.backgroundColor = uFace[0];
     U1.style.backgroundColor = uFace[1];
     U2.style.backgroundColor = uFace[2];
@@ -1491,14 +1438,14 @@ function updateCubeDisplay(){
     U5.style.backgroundColor = uFace[5];
     U6.style.backgroundColor = uFace[6];
     U7.style.backgroundColor = uFace[7];
-    D0.style.backgroundColor = dFace[0];
-    D1.style.backgroundColor = dFace[1];
-    D2.style.backgroundColor = dFace[2];
-    D3.style.backgroundColor = dFace[3];
-    D4.style.backgroundColor = dFace[4];
-    D5.style.backgroundColor = dFace[5];
-    D6.style.backgroundColor = dFace[6];
-    D7.style.backgroundColor = dFace[7];
+    D0.style.backgroundColor = dFace[UI_TO_D[0]];
+    D1.style.backgroundColor = dFace[UI_TO_D[1]];
+    D2.style.backgroundColor = dFace[UI_TO_D[2]];
+    D3.style.backgroundColor = dFace[UI_TO_D[3]];
+    D4.style.backgroundColor = dFace[UI_TO_D[4]];
+    D5.style.backgroundColor = dFace[UI_TO_D[5]];
+    D6.style.backgroundColor = dFace[UI_TO_D[6]];
+    D7.style.backgroundColor = dFace[UI_TO_D[7]];
     L0.style.backgroundColor = lFace[0];
     L1.style.backgroundColor = lFace[1];
     L2.style.backgroundColor = lFace[2];

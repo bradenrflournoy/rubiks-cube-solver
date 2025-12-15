@@ -97,18 +97,21 @@ body::before{
 /* ---------- Workspace ---------- */
 .workspace{
   display: flex;
-  gap: 26px;              /* separates picker from cube */
+  column-gap: calc(var(--radius) + 8px);
   justify-content: center;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 /* ---------- Cube net ---------- */
 .cube-net{
   display: grid;
-  grid-template-columns: repeat(4, auto);
-  grid-template-rows: repeat(3, auto);
-  gap: 10px;
+
+  /* U on top, L F R, D, then B under D */
+  grid-template-columns: repeat(3, auto);
+  grid-template-rows: repeat(4, auto);
+
+  gap: 8px;
   align-items: start;
   justify-content: center;
 }
@@ -118,22 +121,25 @@ body::before{
 .face-l{ grid-column: 1; grid-row: 2; }
 .face-f{ grid-column: 2; grid-row: 2; }
 .face-r{ grid-column: 3; grid-row: 2; }
-.face-b{ grid-column: 4; grid-row: 2; }
 .face-d{ grid-column: 2; grid-row: 3; }
+.face-b{ grid-column: 2; grid-row: 4; } /* Back on bottom */
 
 .face{
   display: grid;
-  grid-template-columns: repeat(3, 46px);
-  grid-template-rows: repeat(3, 46px);
-  gap: 6px;
-  padding: 10px;
+
+  /* about half size (46px -> 23px) */
+  grid-template-columns: repeat(3, 23px);
+  grid-template-rows: repeat(3, 23px);
+
+  gap: 3px;
+  padding: 6px;
   border-radius: 14px;
   background: rgba(0,0,0,0.18);
   border: 1px solid rgba(255,255,255,0.08);
 }
 
 .tile, .center{
-  border-radius: 10px;
+  border-radius: 7px;
 }
 .tile{
   border: 1px solid rgba(0,0,0,0.35);
@@ -162,6 +168,7 @@ body::before{
   display: grid;
   gap: 14px;
   min-width: 240px;
+  align-content: center;
 }
 
 .sidepanel-title{
@@ -181,14 +188,16 @@ body::before{
 
 .picker-grid{
   display: grid;
-  grid-template-columns: repeat(3, 42px);
-  gap: 10px;
+
+  /* scale picker down to match net */
+  grid-template-columns: repeat(3, 26px);
+  gap: 8px;
 }
 
 .pick{
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
   border: 1px solid rgba(0,0,0,0.35);
   cursor: pointer;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
@@ -223,12 +232,17 @@ body::before{
   color: var(--text);
 }
 
-/* Small screens: reduce tile size */
+/* Small screens: allow wrapping again so it doesn't overflow */
+@media (max-width: 760px){
+  .workspace{ flex-wrap: wrap; }
+}
+
+/* Very small screens: slightly larger tiles than 23px (touch targets) */
 @media (max-width: 520px){
   .face{
-    grid-template-columns: repeat(3, 38px);
-    grid-template-rows: repeat(3, 38px);
+    grid-template-columns: repeat(3, 26px);
+    grid-template-rows: repeat(3, 26px);
   }
-  .picker-grid{ grid-template-columns: repeat(3, 38px); }
-  .pick{ width: 38px; height: 38px; }
+  .picker-grid{ grid-template-columns: repeat(3, 30px); }
+  .pick{ width: 30px; height: 30px; }
 }
