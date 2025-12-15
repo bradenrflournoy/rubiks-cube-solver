@@ -1,114 +1,113 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <link href = "style.css" rel = "stylesheet"/>
-        <script src = "script.js" defer></script>
-        <title>cube solver</title>
-        <meta charset = "UTF-8"/>
-    </head>
-    <body>
-        <h1 style = "text-align: center">Rubik's Cube Solver</h1>
-        <!--  Row 1 display  -->
-        <div>
-            <button type = "button"; class = "whiteButtonTop"; id = "U0"></button>
-            <button type = "button"; class = "whiteButtonTop"; id = "U1"></button>
-            <button type = "button"; class = "whiteButtonTop"; id = "U2"></button>
-            <button type = "button"; class = "colorChoiceG"; id = "G"></button>
-            <button type = "button"; class = "colorChoiceB"; id = "B"></button>
-            <button type = "button"; class = "colorChoiceW"; id = "W"></button>
-            <button type = "button"; class = "colorChoiceY"; id = "Y"></button>
-            <button type = "button"; class = "colorChoiceO"; id = "O"></button>
-            <button type = "button"; class = "colorChoiceR"; id = "R"></button>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rubik's Cube Solver</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="page-header">
+    <h1>Rubik's Cube Solver</h1>
+  </header>
+
+  <main class="app">
+    <section class="panel">
+      <div class="cube-net" aria-label="Rubik's cube net">
+        <div class="face face-u" aria-label="Up face">
+          <button class="tile" id="U0" type="button"></button>
+          <button class="tile" id="U1" type="button"></button>
+          <button class="tile" id="U2" type="button"></button>
+          <button class="tile" id="U7" type="button"></button>
+          <div class="center" data-center="U"></div>
+          <button class="tile" id="U3" type="button"></button>
+          <button class="tile" id="U6" type="button"></button>
+          <button class="tile" id="U5" type="button"></button>
+          <button class="tile" id="U4" type="button"></button>
         </div>
-        <!--  Row 2 display  -->
-        <div>
-            <button type = "button"; class = "whiteButtonTop"; id = "U7"></button>
-            <button class = "whiteButtonTop"></button>
-            <button type = "button"; class = "whiteButtonTop"; id = "U3"></button>
-            <p class = "currentTurnDisplay">Current Turn:</p>
+
+        <div class="face face-l" aria-label="Left face">
+          <button class="tile" id="L0" type="button"></button>
+          <button class="tile" id="L1" type="button"></button>
+          <button class="tile" id="L2" type="button"></button>
+          <button class="tile" id="L7" type="button"></button>
+          <div class="center" data-center="L"></div>
+          <button class="tile" id="L3" type="button"></button>
+          <button class="tile" id="L6" type="button"></button>
+          <button class="tile" id="L5" type="button"></button>
+          <button class="tile" id="L4" type="button"></button>
         </div>
-        <!--  Row 3 display  -->
-        <div>
-            <button type = "button"; class = "whiteButtonTop"; id = "U6"></button>
-            <button type = "button"; class = "whiteButtonTop"; id = "U5"></button>
-            <button type = "button"; class = "whiteButtonTop"; id = "U4"></button>
+
+        <div class="face face-f" aria-label="Front face">
+          <button class="tile" id="F0" type="button"></button>
+          <button class="tile" id="F1" type="button"></button>
+          <button class="tile" id="F2" type="button"></button>
+          <button class="tile" id="F7" type="button"></button>
+          <div class="center" data-center="F"></div>
+          <button class="tile" id="F3" type="button"></button>
+          <button class="tile" id="F6" type="button"></button>
+          <button class="tile" id="F5" type="button"></button>
+          <button class="tile" id="F4" type="button"></button>
         </div>
-        <!--  Row 4 display  -->
-        <div>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L0"></button>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L1"></button>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L2"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F0"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F1"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F2"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R0"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R1"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R2"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B0"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B1"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B2"></button>
+
+        <div class="face face-r" aria-label="Right face">
+          <button class="tile" id="R0" type="button"></button>
+          <button class="tile" id="R1" type="button"></button>
+          <button class="tile" id="R2" type="button"></button>
+          <button class="tile" id="R7" type="button"></button>
+          <div class="center" data-center="R"></div>
+          <button class="tile" id="R3" type="button"></button>
+          <button class="tile" id="R6" type="button"></button>
+          <button class="tile" id="R5" type="button"></button>
+          <button class="tile" id="R4" type="button"></button>
         </div>
-        <!--  Row 5 display  -->
-        <div>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L7"></button>
-            <button class = "orangeButtonMiddle"></button>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L3"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F7"></button>
-            <button class = "greenButtonMiddle"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F3"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R7"></button>
-            <button class = "redButtonMiddle"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R3"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B7"></button>
-            <button class = "blueButtonMiddle"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B3"></button>
-            <p class = "turnDisplay"; id = "turnDisplay">--</p>
+
+        <div class="face face-b" aria-label="Back face">
+          <button class="tile" id="B0" type="button"></button>
+          <button class="tile" id="B1" type="button"></button>
+          <button class="tile" id="B2" type="button"></button>
+          <button class="tile" id="B7" type="button"></button>
+          <div class="center" data-center="B"></div>
+          <button class="tile" id="B3" type="button"></button>
+          <button class="tile" id="B6" type="button"></button>
+          <button class="tile" id="B5" type="button"></button>
+          <button class="tile" id="B4" type="button"></button>
         </div>
-        <!--  Row 6 display  -->
-        <div>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L6"></button>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L5"></button>
-            <button type = "button"; class = "orangeButtonMiddle"; id = "L4"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F6"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F5"></button>
-            <button type = "button"; class = "greenButtonMiddle"; id = "F4"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R6"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R5"></button>
-            <button type = "button"; class = "redButtonMiddle"; id = "R4"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B6"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B5"></button>
-            <button type = "button"; class = "blueButtonMiddle"; id = "B4"></button>
+
+        <div class="face face-d" aria-label="Down face">
+          <button class="tile" id="D0" type="button"></button>
+          <button class="tile" id="D1" type="button"></button>
+          <button class="tile" id="D2" type="button"></button>
+          <button class="tile" id="D7" type="button"></button>
+          <div class="center" data-center="D"></div>
+          <button class="tile" id="D3" type="button"></button>
+          <button class="tile" id="D6" type="button"></button>
+          <button class="tile" id="D5" type="button"></button>
+          <button class="tile" id="D4" type="button"></button>
         </div>
-        <!--  Row 7 display  -->
-        <div>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D0"></button>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D1"></button>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D2"></button>
-        </div>
-        <!--  Row 8 display  -->
-        <div>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D7"></button>
-            <button class = "yellowButtonBottom"></button>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D3"></button>
-        </div>
-        <!--  Row 9 display  -->
-        <div>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D6"></button>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D5"></button>
-            <button type = "button"; class = "yellowButtonBottom"; id = "D4"></button>
-        </div>
-        <hr class = "blueBar"/>
-        <p class = "solutionTitle">Solution:</p>
-        <hr class = "blueBar"/>
-        <div class = "solutionDiv">
-            <p>First Layer Solution:</p>
-            <p id = "FLS"; class = "redText">Directions: The Rubik's Cube display consists of the six sides of the cube shown as if the cube were unfolded side by side, with the green side facing you and the white side facing up.</p>
-            <p>Second Layer Solution:</p>
-            <p id = "SLS"; class = "redText">Directions: Use the color picker in the top right, click the turn buttons in the bottom left, or click the scramble button to scramble the cube. When your scramble is done, press the solve button to display your scramble's solution, and then press the execute button to see the scramble solved on screen.</p>
-            <p>Last Layer Orientation Solution:</p>
-            <p id = "LLOS"; class = "redText">Directions: To use the color picker, select a color from the bar in the top right and click any tile on the cube to change its color.</p>
-            <p>Last Layer Permutation Solution:</p>
-            <p id = "LLPS"; class = "redText">Directions: To use the turn buttons, click any of the twelve letter buttons in the bottom left (letters stand for Front, Back, Up, Down, Left, Right; apostrophe = counterclockwise; these letters can be followed in the solution to solve your physical cube).</p>
-        </div>
-    </body>
+      </div>
+
+      <div class="picker" aria-label="Color picker">
+        <button class="pick pick-g" id="G" type="button" title="Green"></button>
+        <button class="pick pick-b" id="B" type="button" title="Blue"></button>
+        <button class="pick pick-w" id="W" type="button" title="White"></button>
+        <button class="pick pick-y" id="Y" type="button" title="Yellow"></button>
+        <button class="pick pick-o" id="O" type="button" title="Orange"></button>
+        <button class="pick pick-r" id="R" type="button" title="Red"></button>
+      </div>
+
+      <div class="solution">
+        <h2>Solution</h2>
+        <p id="FLS" class="solution-line"></p>
+
+        <!-- kept for script compatibility; hidden via CSS -->
+        <p id="SLS" class="visually-hidden"></p>
+        <p id="LLOS" class="visually-hidden"></p>
+        <p id="LLPS" class="visually-hidden"></p>
+        <span id="turnDisplay" class="visually-hidden"></span>
+      </div>
+    </section>
+  </main>
+</body>
 </html>

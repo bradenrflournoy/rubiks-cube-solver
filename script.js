@@ -285,14 +285,7 @@ R7.onclick = () => {
     tileChange(R7, rFace, 7);
 }
 
-//  Turn display paragraph element
-var turnDisplay = document.getElementById("turnDisplay");
-
-//  Solution paragraph elements
-var FLS = document.getElementById("FLS");
-var SLS = document.getElementById("SLS");
-var LLOS = document.getElementById("LLOS");
-var LLPS = document.getElementById("LLPS");
+const solutionLine = document.getElementById("solutionLine");
 
 //  Turn buttons
 var fNTurnButton = document.createElement("button");
@@ -1414,7 +1407,7 @@ solveButton.onclick = () => {
     saveScramble();
     
     solution = [];
-    turnDisplay.textContent = "Solving...";
+    solutionLine.textContent = "Solving...";
 
     let moves;
     try {
@@ -1431,11 +1424,7 @@ solveButton.onclick = () => {
     reconstructScramble();
     updateCubeDisplay();
 
-    // Display solution text
-    FLS.textContent = solution.join(" ");
-    SLS.textContent = "";
-    LLOS.textContent = "";
-    LLPS.textContent = "";
+    solutionLine.textContent = solution.join(" ");
 };
 
 //  When clicked, cube solves itself turn by turn
@@ -1445,58 +1434,39 @@ executeButton.onclick = function(){
     }
 }
 
+//  Move function for execution
 //  Execution function with timer
+
+function doOneMove(m) {
+    if (m === "F") return fNTurn();
+    if (m === "F'") return fPTurn();
+    if (m === "B") return bNTurn();
+    if (m === "B'") return bPTurn();
+    if (m === "U") return uNTurn();
+    if (m === "U'") return uPTurn();
+    if (m === "D") return dNTurn();
+    if (m === "D'") return dPTurn();
+    if (m === "L") return lNTurn();
+    if (m === "L'") return lPTurn();
+    if (m === "R") return rNTurn();
+    if (m === "R'") return rPTurn();
+}
+
 function executionTimer(i){
     setTimeout(function(){
-        if (solution[i] == "F"){
-            fNTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "F'"){
-            fPTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "B"){
-            bNTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "B'"){
-            bPTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "U"){
-            uNTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "U'"){
-            uPTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "D"){
-            dNTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "D'"){
-            dPTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "L"){
-            lNTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "L'"){
-            lPTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "R"){
-            rNTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
-        } else if (solution[i] == "R'"){
-            rPTurn();
-            updateCubeDisplay();
-            turnDisplay.textContent = solution[i];
+        const m = solution[i];
+        if (!m) return;
+
+        if (m.endsWith("2")) {
+            // "R2" => do "R" twice
+            const base = m[0];
+            doOneMove(base);
+            doOneMove(base);
+        } else {
+            doOneMove(m);
         }
+
+        updateCubeDisplay();
     }, (100 * i));
 }
 
