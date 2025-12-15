@@ -14,98 +14,103 @@
 
   <main class="app">
     <section class="panel">
-      <div class="cube-net" aria-label="Rubik's cube net">
-        <div class="face face-u" aria-label="Up face">
-          <button class="tile" id="U0" type="button"></button>
-          <button class="tile" id="U1" type="button"></button>
-          <button class="tile" id="U2" type="button"></button>
-          <button class="tile" id="U7" type="button"></button>
-          <div class="center" data-center="U"></div>
-          <button class="tile" id="U3" type="button"></button>
-          <button class="tile" id="U6" type="button"></button>
-          <button class="tile" id="U5" type="button"></button>
-          <button class="tile" id="U4" type="button"></button>
+      <!-- JS-created buttons should be appended here instead of document.body -->
+      <div id="controls" class="controls" aria-label="Controls"></div>
+
+      <div class="workspace">
+        <div class="cube-net" aria-label="Rubik's cube net">
+          <div class="face face-u" aria-label="Up face">
+            <button class="tile" id="U0" type="button"></button>
+            <button class="tile" id="U1" type="button"></button>
+            <button class="tile" id="U2" type="button"></button>
+            <button class="tile" id="U7" type="button"></button>
+            <div class="center" data-center="U" aria-hidden="true"></div>
+            <button class="tile" id="U3" type="button"></button>
+            <button class="tile" id="U6" type="button"></button>
+            <button class="tile" id="U5" type="button"></button>
+            <button class="tile" id="U4" type="button"></button>
+          </div>
+
+          <div class="face face-l" aria-label="Left face">
+            <button class="tile" id="L0" type="button"></button>
+            <button class="tile" id="L1" type="button"></button>
+            <button class="tile" id="L2" type="button"></button>
+            <button class="tile" id="L7" type="button"></button>
+            <div class="center" data-center="L" aria-hidden="true"></div>
+            <button class="tile" id="L3" type="button"></button>
+            <button class="tile" id="L6" type="button"></button>
+            <button class="tile" id="L5" type="button"></button>
+            <button class="tile" id="L4" type="button"></button>
+          </div>
+
+          <div class="face face-f" aria-label="Front face">
+            <button class="tile" id="F0" type="button"></button>
+            <button class="tile" id="F1" type="button"></button>
+            <button class="tile" id="F2" type="button"></button>
+            <button class="tile" id="F7" type="button"></button>
+            <div class="center" data-center="F" aria-hidden="true"></div>
+            <button class="tile" id="F3" type="button"></button>
+            <button class="tile" id="F6" type="button"></button>
+            <button class="tile" id="F5" type="button"></button>
+            <button class="tile" id="F4" type="button"></button>
+          </div>
+
+          <div class="face face-r" aria-label="Right face">
+            <button class="tile" id="R0" type="button"></button>
+            <button class="tile" id="R1" type="button"></button>
+            <button class="tile" id="R2" type="button"></button>
+            <button class="tile" id="R7" type="button"></button>
+            <div class="center" data-center="R" aria-hidden="true"></div>
+            <button class="tile" id="R3" type="button"></button>
+            <button class="tile" id="R6" type="button"></button>
+            <button class="tile" id="R5" type="button"></button>
+            <button class="tile" id="R4" type="button"></button>
+          </div>
+
+          <div class="face face-b" aria-label="Back face">
+            <button class="tile" id="B0" type="button"></button>
+            <button class="tile" id="B1" type="button"></button>
+            <button class="tile" id="B2" type="button"></button>
+            <button class="tile" id="B7" type="button"></button>
+            <div class="center" data-center="B" aria-hidden="true"></div>
+            <button class="tile" id="B3" type="button"></button>
+            <button class="tile" id="B6" type="button"></button>
+            <button class="tile" id="B5" type="button"></button>
+            <button class="tile" id="B4" type="button"></button>
+          </div>
+
+          <div class="face face-d" aria-label="Down face">
+            <button class="tile" id="D0" type="button"></button>
+            <button class="tile" id="D1" type="button"></button>
+            <button class="tile" id="D2" type="button"></button>
+            <button class="tile" id="D7" type="button"></button>
+            <div class="center" data-center="D" aria-hidden="true"></div>
+            <button class="tile" id="D3" type="button"></button>
+            <button class="tile" id="D6" type="button"></button>
+            <button class="tile" id="D5" type="button"></button>
+            <button class="tile" id="D4" type="button"></button>
+          </div>
         </div>
 
-        <div class="face face-l" aria-label="Left face">
-          <button class="tile" id="L0" type="button"></button>
-          <button class="tile" id="L1" type="button"></button>
-          <button class="tile" id="L2" type="button"></button>
-          <button class="tile" id="L7" type="button"></button>
-          <div class="center" data-center="L"></div>
-          <button class="tile" id="L3" type="button"></button>
-          <button class="tile" id="L6" type="button"></button>
-          <button class="tile" id="L5" type="button"></button>
-          <button class="tile" id="L4" type="button"></button>
+        <div class="sidepanel">
+          <div class="picker" aria-label="Color picker">
+            <h2 class="sidepanel-title">Color picker</h2>
+            <div class="picker-grid">
+              <button class="pick pick-g" id="G" type="button" title="Green" aria-label="Pick green"></button>
+              <button class="pick pick-b" id="B" type="button" title="Blue" aria-label="Pick blue"></button>
+              <button class="pick pick-w" id="W" type="button" title="White" aria-label="Pick white"></button>
+              <button class="pick pick-y" id="Y" type="button" title="Yellow" aria-label="Pick yellow"></button>
+              <button class="pick pick-o" id="O" type="button" title="Orange" aria-label="Pick orange"></button>
+              <button class="pick pick-r" id="R" type="button" title="Red" aria-label="Pick red"></button>
+            </div>
+          </div>
+
+          <div class="solution">
+            <h2>Solution</h2>
+            <!-- Use this single line in script.js -->
+            <p id="solutionLine" class="solution-line"></p>
+          </div>
         </div>
-
-        <div class="face face-f" aria-label="Front face">
-          <button class="tile" id="F0" type="button"></button>
-          <button class="tile" id="F1" type="button"></button>
-          <button class="tile" id="F2" type="button"></button>
-          <button class="tile" id="F7" type="button"></button>
-          <div class="center" data-center="F"></div>
-          <button class="tile" id="F3" type="button"></button>
-          <button class="tile" id="F6" type="button"></button>
-          <button class="tile" id="F5" type="button"></button>
-          <button class="tile" id="F4" type="button"></button>
-        </div>
-
-        <div class="face face-r" aria-label="Right face">
-          <button class="tile" id="R0" type="button"></button>
-          <button class="tile" id="R1" type="button"></button>
-          <button class="tile" id="R2" type="button"></button>
-          <button class="tile" id="R7" type="button"></button>
-          <div class="center" data-center="R"></div>
-          <button class="tile" id="R3" type="button"></button>
-          <button class="tile" id="R6" type="button"></button>
-          <button class="tile" id="R5" type="button"></button>
-          <button class="tile" id="R4" type="button"></button>
-        </div>
-
-        <div class="face face-b" aria-label="Back face">
-          <button class="tile" id="B0" type="button"></button>
-          <button class="tile" id="B1" type="button"></button>
-          <button class="tile" id="B2" type="button"></button>
-          <button class="tile" id="B7" type="button"></button>
-          <div class="center" data-center="B"></div>
-          <button class="tile" id="B3" type="button"></button>
-          <button class="tile" id="B6" type="button"></button>
-          <button class="tile" id="B5" type="button"></button>
-          <button class="tile" id="B4" type="button"></button>
-        </div>
-
-        <div class="face face-d" aria-label="Down face">
-          <button class="tile" id="D0" type="button"></button>
-          <button class="tile" id="D1" type="button"></button>
-          <button class="tile" id="D2" type="button"></button>
-          <button class="tile" id="D7" type="button"></button>
-          <div class="center" data-center="D"></div>
-          <button class="tile" id="D3" type="button"></button>
-          <button class="tile" id="D6" type="button"></button>
-          <button class="tile" id="D5" type="button"></button>
-          <button class="tile" id="D4" type="button"></button>
-        </div>
-      </div>
-
-      <div class="picker" aria-label="Color picker">
-        <button class="pick pick-g" id="G" type="button" title="Green"></button>
-        <button class="pick pick-b" id="B" type="button" title="Blue"></button>
-        <button class="pick pick-w" id="W" type="button" title="White"></button>
-        <button class="pick pick-y" id="Y" type="button" title="Yellow"></button>
-        <button class="pick pick-o" id="O" type="button" title="Orange"></button>
-        <button class="pick pick-r" id="R" type="button" title="Red"></button>
-      </div>
-
-      <div class="solution">
-        <h2>Solution</h2>
-        <p id="FLS" class="solution-line"></p>
-
-        <!-- kept for script compatibility; hidden via CSS -->
-        <p id="SLS" class="visually-hidden"></p>
-        <p id="LLOS" class="visually-hidden"></p>
-        <p id="LLPS" class="visually-hidden"></p>
-        <span id="turnDisplay" class="visually-hidden"></span>
       </div>
     </section>
   </main>

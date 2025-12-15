@@ -14,6 +14,16 @@ var dFace = [y, y, y, y, y, y, y, y];
 var lFace = [o, o, o, o, o, o, o, o];
 var rFace = [r, r, r, r, r, r, r, r];
 
+function setSolvedCube() {
+    // Fill each face with its color (8 stickers per face)
+    fFace = Array(8).fill(g);
+    bFace = Array(8).fill(b);
+    uFace = Array(8).fill(w);
+    dFace = Array(8).fill(y);
+    lFace = Array(8).fill(o);
+    rFace = Array(8).fill(r);
+}
+
 //  Saves the current scramble for later reversion
 var currentFScramble = [];
 var currentBScramble = [];
@@ -287,67 +297,69 @@ R7.onclick = () => {
 
 const solutionLine = document.getElementById("solutionLine");
 
+const controls = document.getElementById("controls");
+
 //  Turn buttons
 var fNTurnButton = document.createElement("button");
     fNTurnButton.innerText = "F";
-    document.body.appendChild(fNTurnButton);
+    controls.appendChild(fNTurnButton);
 var fPTurnButton = document.createElement("button");
     fPTurnButton.innerText = "F'";
-    document.body.appendChild(fPTurnButton);
+    controls.appendChild(fPTurnButton);
 var bNTurnButton = document.createElement("button");
     bNTurnButton.innerText = "B";
-    document.body.appendChild(bNTurnButton);
+    controls.appendChild(bNTurnButton);
 var bPTurnButton = document.createElement("button");
     bPTurnButton.innerText = "B'";
-    document.body.appendChild(bPTurnButton);
+    controls.appendChild(bPTurnButton);
 var uNTurnButton = document.createElement("button");
     uNTurnButton.innerText = "U";
-    document.body.appendChild(uNTurnButton);
+    controls.appendChild(uNTurnButton);
 var uPTurnButton = document.createElement("button");
     uPTurnButton.innerText = "U'";
-    document.body.appendChild(uPTurnButton);
+    controls.appendChild(uPTurnButton);
 var dNTurnButton = document.createElement("button");
     dNTurnButton.innerText = "D";
-    document.body.appendChild(dNTurnButton);
+    controls.appendChild(dNTurnButton);
 var dPTurnButton = document.createElement("button");
     dPTurnButton.innerText = "D'";
-    document.body.appendChild(dPTurnButton);
+    controls.appendChild(dPTurnButton);
 var lNTurnButton = document.createElement("button");
     lNTurnButton.innerText = "L";
-    document.body.appendChild(lNTurnButton);
+    controls.appendChild(lNTurnButton);
 var lPTurnButton = document.createElement("button");
     lPTurnButton.innerText = "L'";
-    document.body.appendChild(lPTurnButton);
+    controls.appendChild(lPTurnButton);
 var rNTurnButton = document.createElement("button");
     rNTurnButton.innerText = "R";
-    document.body.appendChild(rNTurnButton);
+    controls.appendChild(rNTurnButton);
 var rPTurnButton = document.createElement("button");
     rPTurnButton.innerText = "R'";
-    document.body.appendChild(rPTurnButton);
+    controls.appendChild(rPTurnButton);
 
 //  Reset button
 var resetButton = document.createElement("button");
     resetButton.innerText = "Reset";
     resetButton.style.backgroundColor = "red";
-    document.body.appendChild(resetButton);
+    controls.appendChild(resetButton);
 
 //  Scramble button
 var scrambleButton = document.createElement("button");
     scrambleButton.innerText = "Scramble";
     scrambleButton.style.backgroundColor = "pink";
-    document.body.appendChild(scrambleButton);
+    controls.appendChild(scrambleButton);
 
 //  Solve button
 var solveButton = document.createElement("button");
     solveButton.innerText = "Solve";
     solveButton.style.backgroundColor = "green";
-    document.body.appendChild(solveButton);
+    controls.appendChild(solveButton);
 
 //  Execute button
 var executeButton = document.createElement("button");
     executeButton.innerText = "Execute";
     executeButton.style.backgroundColor = "lightblue";
-    document.body.appendChild(executeButton);
+    controls.appendChild(executeButton);
 
 //  Shift functions for clockwise turns
 function fNTurn(){
@@ -1332,11 +1344,6 @@ resetButton.onclick = function(){
     lFace = [o, o, o, o, o, o, o, o];
     rFace = [r, r, r, r, r, r, r, r];
     updateCubeDisplay();
-    turnDisplay.textContent = "--";
-    FLS.textContent = "N/A";
-    SLS.textContent = "N/A";
-    LLOS.textContent = "N/A";
-    LLPS.textContent = "N/A";
 }
 
 //  When clicked, cube is randomly scrambled
@@ -1353,51 +1360,39 @@ function scrambleTimer(i){
         if (j == 1){
             fNTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "F";
         } else if (j == 2){
             fPTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "F'";
         } else if (j == 3){
             bNTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "B";
         } else if (j == 4){
             bPTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "B'";
         } else if (j == 5){
             uNTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "U";
         } else if (j == 6){
             uPTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "U'";
         } else if (j == 7){
             dNTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "D";
         } else if (j == 8){
             dPTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "D'";
         } else if (j == 9){
             lNTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "L";
         } else if (j == 10){
             lPTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "L'";
         } else if (j == 11){
             rNTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "R";
         } else if (j == 12){
             rPTurn();
             updateCubeDisplay();
-            turnDisplay.textContent = "R'";
         }
     }, (50 * i));
 }
@@ -1532,3 +1527,6 @@ function showCube(){
     console.log(rFace);
     console.log(solution);
 }
+
+setSolvedCube();
+updateCubeDisplay();
