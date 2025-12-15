@@ -1,0 +1,141 @@
+body {
+    background-color: #8EBCFF;
+    border-style: solid;
+    border-color: #000472;
+}
+
+.blueBar {
+    background-color: #000472;
+    color: #000472;
+    border-color: #000472;
+    width: 1243px;
+    height: 4px;
+}
+
+.whiteButtonTop {
+    background-color: white;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 182px;
+}
+
+.orangeButtonMiddle {
+    background-color: orange;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 50px;
+}
+
+.greenButtonMiddle {
+    background-color: green;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 50px;
+}
+
+.redButtonMiddle {
+    background-color: red;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 50px;
+}
+
+.blueButtonMiddle {
+    background-color: blue;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 50px;
+}
+
+.yellowButtonBottom {
+    background-color: yellow;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 182px;
+}
+
+.colorChoiceG {
+    background-color: green;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 270px;
+}
+
+.colorChoiceB {
+    background-color: blue;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 270px;
+}
+
+.colorChoiceW {
+    background-color: white;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 270px;
+}
+
+.colorChoiceY {
+    background-color: yellow;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 270px;
+}
+
+.colorChoiceO {
+    background-color: orange;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 270px;
+}
+
+.colorChoiceR {
+    background-color: red;
+    width: 40px;
+    height: 40px;
+    position: relative;
+    left: 270px;
+}
+
+.currentTurnDisplay {
+    font-family: arial;
+    font-size: 40px;
+    color: #22262A;
+    position: absolute;
+    left: 800px;
+    top: 750px;
+}
+
+.turnDisplay {
+    font-family: arial;
+    font-size: 80px;
+    color: coral;
+    position: absolute;
+    left: 885px;
+    top: 750px;
+}
+
+.solutionTitle {
+    font-family: arial;
+    font-size: 28px;
+}
+
+.solutionDiv {
+    font-family: arial;
+    font-size: 20px;
+}
+
+.redText {
+    color: #FB1239;
+}

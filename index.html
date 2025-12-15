@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href = "style.css" rel = "stylesheet"/>
+        <script src = "script.js" defer></script>
+        <title>cube solver</title>
+        <meta charset = "UTF-8"/>
+    </head>
+    <body>
+        <h1 style = "text-align: center">Rubik's Cube Solver</h1>
+        <!--  Row 1 display  -->
+        <div>
+            <button type = "button"; class = "whiteButtonTop"; id = "U0"></button>
+            <button type = "button"; class = "whiteButtonTop"; id = "U1"></button>
+            <button type = "button"; class = "whiteButtonTop"; id = "U2"></button>
+            <button type = "button"; class = "colorChoiceG"; id = "G"></button>
+            <button type = "button"; class = "colorChoiceB"; id = "B"></button>
+            <button type = "button"; class = "colorChoiceW"; id = "W"></button>
+            <button type = "button"; class = "colorChoiceY"; id = "Y"></button>
+            <button type = "button"; class = "colorChoiceO"; id = "O"></button>
+            <button type = "button"; class = "colorChoiceR"; id = "R"></button>
+        </div>
+        <!--  Row 2 display  -->
+        <div>
+            <button type = "button"; class = "whiteButtonTop"; id = "U7"></button>
+            <button class = "whiteButtonTop"></button>
+            <button type = "button"; class = "whiteButtonTop"; id = "U3"></button>
+            <p class = "currentTurnDisplay">Current Turn:</p>
+        </div>
+        <!--  Row 3 display  -->
+        <div>
+            <button type = "button"; class = "whiteButtonTop"; id = "U6"></button>
+            <button type = "button"; class = "whiteButtonTop"; id = "U5"></button>
+            <button type = "button"; class = "whiteButtonTop"; id = "U4"></button>
+        </div>
+        <!--  Row 4 display  -->
+        <div>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L0"></button>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L1"></button>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L2"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F0"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F1"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F2"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R0"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R1"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R2"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B0"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B1"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B2"></button>
+        </div>
+        <!--  Row 5 display  -->
+        <div>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L7"></button>
+            <button class = "orangeButtonMiddle"></button>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L3"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F7"></button>
+            <button class = "greenButtonMiddle"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F3"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R7"></button>
+            <button class = "redButtonMiddle"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R3"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B7"></button>
+            <button class = "blueButtonMiddle"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B3"></button>
+            <p class = "turnDisplay"; id = "turnDisplay">--</p>
+        </div>
+        <!--  Row 6 display  -->
+        <div>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L6"></button>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L5"></button>
+            <button type = "button"; class = "orangeButtonMiddle"; id = "L4"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F6"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F5"></button>
+            <button type = "button"; class = "greenButtonMiddle"; id = "F4"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R6"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R5"></button>
+            <button type = "button"; class = "redButtonMiddle"; id = "R4"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B6"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B5"></button>
+            <button type = "button"; class = "blueButtonMiddle"; id = "B4"></button>
+        </div>
+        <!--  Row 7 display  -->
+        <div>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D0"></button>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D1"></button>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D2"></button>
+        </div>
+        <!--  Row 8 display  -->
+        <div>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D7"></button>
+            <button class = "yellowButtonBottom"></button>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D3"></button>
+        </div>
+        <!--  Row 9 display  -->
+        <div>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D6"></button>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D5"></button>
+            <button type = "button"; class = "yellowButtonBottom"; id = "D4"></button>
+        </div>
+        <hr class = "blueBar"/>
+        <p class = "solutionTitle">Solution:</p>
+        <hr class = "blueBar"/>
+        <div class = "solutionDiv">
+            <p>First Layer Solution:</p>
+            <p id = "FLS"; class = "redText">Directions: The Rubik's Cube display consists of the six sides of the cube shown as if the cube were unfolded side by side, with the green side facing you and the white side facing up.</p>
+            <p>Second Layer Solution:</p>
+            <p id = "SLS"; class = "redText">Directions: Use the color picker in the top right, click the turn buttons in the bottom left, or click the scramble button to scramble the cube. When your scramble is done, press the solve button to display your scramble's solution, and then press the execute button to see the scramble solved on screen.</p>
+            <p>Last Layer Orientation Solution:</p>
+            <p id = "LLOS"; class = "redText">Directions: To use the color picker, select a color from the bar in the top right and click any tile on the cube to change its color.</p>
+            <p>Last Layer Permutation Solution:</p>
+            <p id = "LLPS"; class = "redText">Directions: To use the turn buttons, click any of the twelve letter buttons in the bottom left (letters stand for Front, Back, Up, Down, Left, Right; apostrophe = counterclockwise; these letters can be followed in the solution to solve your physical cube).</p>
+        </div>
+    </body>
+</html>
