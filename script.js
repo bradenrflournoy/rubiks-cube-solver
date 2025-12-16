@@ -6,6 +6,8 @@ const y = "yellow";
 const o = "orange";
 const r = "red";
 
+let _tablesPromise = null;
+
 //  Faces are clockwise spirals starting from top left; green is front, white is top
 var fFace = [g, g, g, g, g, g, g, g];
 var bFace = [b, b, b, b, b, b, b, b];
@@ -1013,22 +1015,22 @@ function getCOCoord(co) {
 
 // UD-slice coord: which positions contain E-slice edge cubies {8,9,10,11} (FR,FL,BL,BR)
 function getUDSliceCoord(ep) {
-  // We rank the combination of 4 positions among 12 that hold slice edge IDs.
-  // Standard approach: scan positions 11..0 counting how many chosen.
-  let k = 0;
+  // standard Kociemba-style combination rank
+  // idx in [0..494]
   let idx = 0;
+  let k = 4;
   for (let pos = 11; pos >= 0; pos--) {
-    const edgeId = ep[pos];
-    const isSlice = (edgeId >= 8); // 8..11 are slice edge cubies
-    if (isSlice) {
-      k++;
-    } else {
-      if (k > 0) idx += NCK[pos][k];
+    if (ep[pos] >= 8) {              // slice cubie (FR,FL,BL,BR)
+      idx += NCK[pos][k];
+      k--;
+      if (k === 0) break;
     }
   }
-  // When done k should be 4 on a legal cube
-  return idx; // 0..494
+  return idx;
 }
+
+const SOLVED_EP = [0,1,2,3,4,5,6,7,8,9,10,11];
+const SOLVED_UDS = getUDSliceCoord(SOLVED_EP);
 
 // ---------- Phase 2 coordinates ----------
 
@@ -1041,10 +1043,14 @@ function getCPCoord(cp) {
 // Those are edge positions 0..7.
 // We need permutation of edge *IDs* restricted to the 8 UD-edge cubies (0..7).
 function getUDECoord(ep) {
-  // Extract the 8 edge IDs from positions 0..7
   const ud = ep.slice(0, 8);
-  // These IDs should be 0..7 in some order in G1.
-  return rankPerm(ud); // 0..40319
+  // ensure it’s a permutation of 0..7
+  const seen = new Array(8).fill(false);
+  for (const v of ud) {
+    if (v < 0 || v > 7 || seen[v]) throw new Error("Not in G1: UD edges not 0..7");
+    seen[v] = true;
+  }
+  return rankPerm(ud);
 }
 
 // ESE: permutation of the 4 slice edge cubies (8..11) within the slice positions (8..11 positions in our edge index list are not slice positions; careful!)
@@ -1143,16 +1149,18 @@ function unrankPerm8(idx) {
 function rankPerm8(p) { return rankPerm(p); } // existing
 
 function unrankUDSliceCoord(coord) {
-  // coord 0..494, invert to colex rank
-  let rank = 494 - coord;
-  const pos = new Array(4);
-  // unrank colex: find largest n such that C(n,k) <= rank, descending k
-  for (let k = 4; k >= 1; k--) {
-    let n = 11;
-    while (n >= 0 && NCK[n][k] > rank) n--;
-    pos[k-1] = n;
-    rank -= NCK[n][k];
-    n--;
+  // inverse of getUDSliceCoord
+  // returns an array of 4 positions (ascending) where slice edges should be placed
+  let idx = coord;
+  let k = 4;
+  const pos = [];
+  for (let n = 11; n >= 0; n--) {
+    if (idx >= NCK[n][k]) {
+      pos.push(n);
+      idx -= NCK[n][k];
+      k--;
+      if (k === 0) break;
+    }
   }
   pos.sort((a,b)=>a-b);
   return pos;
@@ -1313,13 +1321,15 @@ function _buildPruningAsync(updateFn){
     // Phase1 pruning from solved (eo=0, uds=0) etc
     const q1 = new Int32Array(2048*495);
     let qh=0, qt=0;
-    q1[qt++] = 0; // packed eo*495+uds
-    _prEOUDS[0]=0;
+    const rootEOUDS = 0 * 495 + SOLVED_UDS;
+    q1[qt++] = rootEOUDS;
+    _prEOUDS[rootEOUDS] = 0;
 
     const q2 = new Int32Array(2187*495);
     let q2h=0, q2t=0;
-    q2[q2t++]=0;
-    _prCOUDS[0]=0;
+    const rootCOUDS = 0 * 495 + SOLVED_UDS;
+    q2[q2t++] = rootCOUDS;
+    _prCOUDS[rootCOUDS] = 0;
 
     function bfs1(){
       const chunk=20000;
@@ -1424,27 +1434,60 @@ function _buildPruningAsync(updateFn){
 
 async function ensureTablesBuilt() {
   if (_tablesReady) return;
+
+  // single-flight: if we're already building, just await it
+  if (_tablesPromise) {
+    await _tablesPromise;
+    return;
+  }
+
   _showLoading("");
-  try{
+  _tablesPromise = (async () => {
     await _buildMoveTablesAsync(_updateLoading);
     await _buildPruningAsync(_updateLoading);
-    _tablesReady=true;
+
+    // sanity: these must exist now
+    if (!_prCP || !_prUDE || !_prEOUDS || !_prCOUDS) {
+      throw new Error("Table build finished but tables missing");
+    }
+
+    _tablesReady = true;
     _hideLoading();
-  } catch (e){
+  })();
+
+  try {
+    await _tablesPromise;
+  } catch (e) {
     console.error(e);
-    _updateLoading("Error building tables: " + (e?.message||e));
-    // keep overlay so user sees failure
+    _updateLoading("Error building tables: " + (e?.message || e));
+    // don't keep a broken promise around
+    _tablesPromise = null;
+    throw e;
   }
 }
 
 // ---------- Updated heuristics ----------
 function h1(eo, co, uds) {
-  const a = _prEOUDS[eo*495 + uds];
-  const b = _prCOUDS[co*495 + uds];
+  const idx1 = eo * 495 + uds;
+  const idx2 = co * 495 + uds;
+
+  const a = _prEOUDS?.[idx1];
+  const b = _prCOUDS?.[idx2];
+
+  if (a === undefined || b === undefined) {
+    throw new Error("Heuristic table not ready or bad index (phase1)");
+  }
   return Math.max(a, b);
 }
+
 function h2(cp, ude) {
-  return Math.max(_prCP[cp], _prUDE[ude]);
+  const a = _prCP?.[cp];
+  const b = _prUDE?.[ude];
+
+  if (a === undefined || b === undefined) {
+    throw new Error("Heuristic table not ready or bad index (phase2)");
+  }
+  return Math.max(a, b);
 }
 
 function buildPhase1Pruning(){ return { prEOUDS:_prEOUDS, prCOUDS:_prCOUDS }; }
@@ -1459,23 +1502,39 @@ function sameFace(a, b) {
   return a[0] === b[0];
 }
 
+function cloneState(st){
+  return {
+    cp: st.cp.slice(),
+    co: st.co.slice(),
+    ep: st.ep.slice(),
+    eo: st.eo.slice(),
+  };
+}
+
 function idaPhase1(startState, maxDepth = 12) {
   const path = [];
 
   function dfs(state, g, bound, lastMove) {
+    if (g === bound) {
+      // can't go deeper in this iteration
+      const eo = getEOCoord(state.eo);
+      const co = getCOCoord(state.co);
+      const uds = getUDSliceCoord(state.ep);
+      return (eo === 0 && co === 0 && uds === 0) ? true : Infinity;
+    }
     const eo = getEOCoord(state.eo);
     const co = getCOCoord(state.co);
     const uds = getUDSliceCoord(state.ep);
     const hv = h1(eo, co, uds);
     if (g + hv > bound) return g + hv;
-    if (eo === 0 && co === 0 && uds === 0) return true;
+    if (eo === 0 && co === 0 && uds === SOLVED_UDS) return true;
 
     let minNext = Infinity;
 
     for (const mv of MOVES_18) {
       if (lastMove && sameFace(lastMove, mv)) continue;
 
-      const ns = structuredClone(state);
+      const ns = cloneState(state);
       applyMoveCubie(ns, mv);
 
       path.push(mv);
@@ -1495,7 +1554,7 @@ function idaPhase1(startState, maxDepth = 12) {
   })();
 
   for (let depth = bound; depth <= maxDepth; depth++) {
-    const res = dfs(structuredClone(startState), 0, depth, null);
+    const res = dfs(cloneState(startState), 0, depth, null);
     if (res === true) return path.slice();
     if (res === Infinity) break;
     bound = res;
@@ -1507,6 +1566,12 @@ function idaPhase2(startState, maxDepth = 18) {
   const path = [];
 
   function dfs(state, g, bound, lastMove) {
+    if (g === bound) {
+      const cp = getCPCoord(state.cp);
+      const ude = getUDECoord(state.ep);
+      const ese = getESECoord(state.ep);
+      return (cp === 0 && ude === 0 && ese === 0) ? true : Infinity;
+    }
     const cp = getCPCoord(state.cp);
     const ude = getUDECoord(state.ep);
     const ese = getESECoord(state.ep);
@@ -1519,7 +1584,7 @@ function idaPhase2(startState, maxDepth = 18) {
     for (const mv of MOVES_10) {
       if (lastMove && sameFace(lastMove, mv)) continue;
 
-      const ns = structuredClone(state);
+      const ns = cloneState(state);
       applyMoveCubie(ns, mv);
 
       path.push(mv);
@@ -1539,36 +1604,12 @@ function idaPhase2(startState, maxDepth = 18) {
   })();
 
   for (let depth = bound; depth <= maxDepth; depth++) {
-    const res = dfs(structuredClone(startState), 0, depth, null);
+    const res = dfs(cloneState(startState), 0, depth, null);
     if (res === true) return path.slice();
     if (res === Infinity) break;
     bound = res;
   }
   return null;
-}
-
-function kociembaSolveFromStickers() {
-  // 1) Convert your current UI stickers to cubie state
-  const st = stickersToCubie(); // {cp,co,ep,eo}
-
-  // 2) Build pruning tables (for first working version, build at runtime)
-  // Later you’ll cache these in localStorage or ship as precomputed blobs.
-  const { prEOCO, prUDSCO } = buildPhase1Pruning();
-  const { prCP, prUDE } = buildPhase2Pruning();
-
-  // 3) Phase 1
-  const seq1 = idaPhase1(structuredClone(st), prEOCO, prUDSCO, 14);
-  if (!seq1) throw new Error("Phase 1 failed");
-
-  // Apply seq1 to get G1 state
-  const g1 = structuredClone(st);
-  for (const mv of seq1) applyMoveCubie(g1, mv);
-
-  // 4) Phase 2
-  const seq2 = idaPhase2(g1, prCP, prUDE, 20);
-  if (!seq2) throw new Error("Phase 2 failed");
-
-  return seq1.concat(seq2);
 }
 
 //  When clicked, cube is reset
@@ -1639,14 +1680,16 @@ function scrambleTimer(i){
 solveButton.onclick = async () => {
   try {
     await ensureTablesBuilt();
+    if (!_tablesReady) throw new Error("Tables not ready");
+
     const cubie = stickersToCubie();
-    // Phase 1
+
     const p1 = idaPhase1(_clone(cubie), 12);
     if (!p1) throw new Error("Phase 1 failed");
+
     const mid = _clone(cubie);
     for (const mv of p1) applyMoveCubie(mid, mv);
-
-    // Phase 2
+    
     const p2 = idaPhase2(mid, 18);
     if (!p2) throw new Error("Phase 2 failed");
 
@@ -1656,7 +1699,7 @@ solveButton.onclick = async () => {
     solutionLine.textContent = (e?.message || String(e));
     console.error(e);
   }
-};;
+};
 
 //  When clicked, cube solves itself turn by turn
 executeButton.onclick = function(){
