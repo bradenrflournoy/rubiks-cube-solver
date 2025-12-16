@@ -481,12 +481,12 @@ function rotateVec90(v, axis, dir) {
 // Clockwise-from-outside corresponds to -90 around the face normal.
 // For faces with normal negative, that flips sign.
 const MOVE_DEF = {
-  "F": { axis:"Z", layer:  1, dir: -1 },
-  "B": { axis:"Z", layer: -1, dir:  1 },
-  "U": { axis:"Y", layer:  1, dir: -1 },
-  "D": { axis:"Y", layer: -1, dir:  1 },
-  "R": { axis:"X", layer:  1, dir: -1 },
-  "L": { axis:"X", layer: -1, dir:  1 },
+  "F": { axis:"Z", layer:  1, dir:  1 },  // was -1
+  "B": { axis:"Z", layer: -1, dir: -1 },  // was  1
+  "U": { axis:"Y", layer:  1, dir: -1 },  // keep
+  "D": { axis:"Y", layer: -1, dir:  1 },  // keep
+  "R": { axis:"X", layer:  1, dir:  1 },  // was -1
+  "L": { axis:"X", layer: -1, dir: -1 },  // was  1
 };
 
 function faceRingTo9(faceArr, centerColor) {
@@ -641,53 +641,72 @@ rPTurnButton.onclick = function(){
     updateCubeDisplay();
 }
 
-// Corner positions in standard order: 0 URF, 1 UFL, 2 ULB, 3 UBR, 4 DFR, 5 DLF, 6 DBL, 7 DRB
-const CORNER_POS_STICKERS = [
-  // URF
-  [ {f:"U", i:4}, {f:"R", i:0}, {f:"F", i:2} ],
-  // UFL
-  [ {f:"U", i:6}, {f:"F", i:0}, {f:"L", i:2} ],
-  // ULB
-  [ {f:"U", i:0}, {f:"L", i:0}, {f:"B", i:2} ],
-  // UBR
-  [ {f:"U", i:2}, {f:"B", i:0}, {f:"R", i:2} ],
-  // DFR
-  [ {f:"D", i:2}, {f:"F", i:4}, {f:"R", i:6} ],
-  // DLF
-  [ {f:"D", i:0}, {f:"L", i:4}, {f:"F", i:6} ],
-  // DBL
-  [ {f:"D", i:6}, {f:"B", i:4}, {f:"L", i:6} ],
-  // DRB
-  [ {f:"D", i:4}, {f:"R", i:4}, {f:"B", i:6} ],
+// idx9 -> ring index mapping (inverse of faceRingTo9, excluding center)
+const IDX9_TO_RING = {
+  0: 0,
+  1: 1,
+  2: 2,
+  3: 7,
+  5: 3,
+  6: 6,
+  7: 5,
+  8: 4,
+};
+
+const FACE_NORMAL = {
+  U: [0, 1, 0],
+  D: [0,-1, 0],
+  F: [0, 0, 1],
+  B: [0, 0,-1],
+  R: [1, 0, 0],
+  L: [-1,0, 0],
+};
+
+// corner cubie positions (by cubie coordinate) and which faces they touch
+const CORNER_COORDS = [
+  { faces:["U","R","F"], p:[ 1, 1, 1] }, // URF
+  { faces:["U","F","L"], p:[-1, 1, 1] }, // UFL
+  { faces:["U","L","B"], p:[-1, 1,-1] }, // ULB
+  { faces:["U","B","R"], p:[ 1, 1,-1] }, // UBR
+  { faces:["D","F","R"], p:[ 1,-1, 1] }, // DFR
+  { faces:["D","L","F"], p:[-1,-1, 1] }, // DLF
+  { faces:["D","B","L"], p:[-1,-1,-1] }, // DBL
+  { faces:["D","R","B"], p:[ 1,-1,-1] }, // DRB
 ];
 
-// Edge positions in standard order: 0 UR, 1 UF, 2 UL, 3 UB, 4 DR, 5 DF, 6 DL, 7 DB, 8 FR, 9 FL, 10 BL, 11 BR
-const EDGE_POS_STICKERS = [
-  // UR
-  [ {f:"U", i:3}, {f:"R", i:1} ],
-  // UF
-  [ {f:"U", i:5}, {f:"F", i:1} ],
-  // UL
-  [ {f:"U", i:7}, {f:"L", i:1} ],
-  // UB
-  [ {f:"U", i:1}, {f:"B", i:1} ],
-  // DR
-  [ {f:"D", i:3}, {f:"R", i:5} ],
-  // DF
-  [ {f:"D", i:1}, {f:"F", i:5} ],
-  // DL
-  [ {f:"D", i:7}, {f:"L", i:5} ],
-  // DB
-  [ {f:"D", i:5}, {f:"B", i:5} ],
-  // FR
-  [ {f:"F", i:3}, {f:"R", i:7} ],
-  // FL
-  [ {f:"F", i:7}, {f:"L", i:3} ],
-  // BL
-  [ {f:"B", i:3}, {f:"L", i:7} ],
-  // BR
-  [ {f:"B", i:7}, {f:"R", i:3} ],
+// edge cubie positions
+const EDGE_COORDS = [
+  { faces:["U","R"], p:[ 1, 1, 0] }, // UR
+  { faces:["U","F"], p:[ 0, 1, 1] }, // UF
+  { faces:["U","L"], p:[-1, 1, 0] }, // UL
+  { faces:["U","B"], p:[ 0, 1,-1] }, // UB
+  { faces:["D","R"], p:[ 1,-1, 0] }, // DR
+  { faces:["D","F"], p:[ 0,-1, 1] }, // DF
+  { faces:["D","L"], p:[-1,-1, 0] }, // DL
+  { faces:["D","B"], p:[ 0,-1,-1] }, // DB
+  { faces:["F","R"], p:[ 1, 0, 1] }, // FR
+  { faces:["F","L"], p:[-1, 0, 1] }, // FL
+  { faces:["B","L"], p:[-1, 0,-1] }, // BL
+  { faces:["B","R"], p:[ 1, 0,-1] }, // BR
 ];
+
+function faceletToRingPos(face, p) {
+  const n = FACE_NORMAL[face];
+  const { face: f2, idx9 } = xyzToFacelet(p, n);
+  if (f2 !== face) throw new Error(`xyzToFacelet mismatch: expected ${face}, got ${f2}`);
+  if (idx9 === 4) throw new Error("center shouldn't appear in corner/edge");
+  const ring = IDX9_TO_RING[idx9];
+  if (ring === undefined) throw new Error("bad idx9 " + idx9);
+  return { f: face, i: ring };
+}
+
+const CORNER_POS_STICKERS = CORNER_COORDS.map(c =>
+  c.faces.map(face => faceletToRingPos(face, c.p))
+);
+
+const EDGE_POS_STICKERS = EDGE_COORDS.map(e =>
+  e.faces.map(face => faceletToRingPos(face, e.p))
+);
 
 // Corner cubie IDs in the same order as corner positions
 const CORNER_CUBIE_COLORS = [
@@ -730,8 +749,7 @@ function getFaceArr(face) {
 }
 
 function stickerAt(pos) {
-  const arr = getFaceArr(pos.f);
-  return arr[pos.i];
+  return getFaceArr(pos.f)[pos.i];
 }
 
 function sameUnordered2(a, b) {
@@ -759,51 +777,34 @@ function findCornerCubieId(colors3) {
   return -1;
 }
 
-// Standard Kociemba corner orientation convention:
-// ori=0 if U/D color is on U or D
-// ori=1 if U/D color is on R or L
-// ori=2 if U/D color is on F or B
-function cornerOrientationFromStickers(stickers3, colors3) {
-  // stickers3: [{f,i},...], colors3 aligned with stickers3
-  const udColor = colors3.find(c => c === w || c === y);
-  if (udColor === undefined) return 0;
+function cornerOriFromCubieAndObserved(cubieId, observed3) {
+  const ref = CORNER_CUBIE_COLORS[cubieId]; // canonical order for that cubie
 
-  const idx = colors3.indexOf(udColor);
-  const face = stickers3[idx].f;
+  // orientation 0: [ref0, ref1, ref2]
+  if (observed3[0] === ref[0] && observed3[1] === ref[1] && observed3[2] === ref[2]) return 0;
 
-  if (face === "U" || face === "D") return 0;
-  if (face === "R" || face === "L") return 1;
-  // F or B
-  return 2;
+  // orientation 1: [ref2, ref0, ref1]  (twist clockwise)
+  if (observed3[0] === ref[2] && observed3[1] === ref[0] && observed3[2] === ref[1]) return 1;
+
+  // orientation 2: [ref1, ref2, ref0]
+  if (observed3[0] === ref[1] && observed3[1] === ref[2] && observed3[2] === ref[0]) return 2;
+
+  // If we matched by unordered set earlier, we should always match one of these 3.
+  throw new Error(`Corner orientation mismatch for cubie ${cubieId}: obs=${observed3.join(",")} ref=${ref.join(",")}`);
 }
 
-// Standard Kociemba edge orientation convention:
-// - For U/D layer edges (UR,UF,UL,UB,DR,DF,DL,DB):
-//   oriented if U/D color is on U/D face
-// - For slice edges (FR,FL,BL,BR):
-//   oriented if F/B color is on F/B face
-function edgeOrientationFromStickers(edgePosIndex, stickers2, colors2) {
-  const isUDLayer = (edgePosIndex <= 7); // UR..DB
-  if (isUDLayer) {
-    const udColor = (colors2[0] === w || colors2[0] === y) ? colors2[0]
-                 : (colors2[1] === w || colors2[1] === y) ? colors2[1]
-                 : null;
-    if (udColor == null) return 0;
+function edgeOriFromCubieAndObserved(cubieId, observed2) {
+  const ref = EDGE_CUBIE_COLORS[cubieId]; // canonical order
 
-    const idx = colors2[0] === udColor ? 0 : 1;
-    const face = stickers2[idx].f;
-    return (face === "U" || face === "D") ? 0 : 1;
-  } else {
-    // slice edges: check F/B color placement
-    const fbColor = (colors2[0] === g || colors2[0] === b) ? colors2[0]
-                 : (colors2[1] === g || colors2[1] === b) ? colors2[1]
-                 : null;
-    if (fbColor == null) return 0;
+  // orientation 0: same order
+  if (observed2[0] === ref[0] && observed2[1] === ref[1]) return 0;
 
-    const idx = colors2[0] === fbColor ? 0 : 1;
-    const face = stickers2[idx].f;
-    return (face === "F" || face === "B") ? 0 : 1;
-  }
+  // orientation 1: flipped
+  if (observed2[0] === ref[1] && observed2[1] === ref[0]) return 1;
+
+  throw new Error(
+    `Edge orientation mismatch for cubie ${cubieId}: obs=${observed2.join(",")} ref=${ref.join(",")}`
+  );
 }
 
 function parityOfPermutation(p) {
@@ -826,180 +827,52 @@ function parityOfPermutation(p) {
 }
 
 function stickersToCubie() {
-  // Build a lookup from (p,n) -> color by iterating all 48 non-center facelets.
-  // Your UI stores each face as 8 ring stickers (idx8 0..7) plus a fixed center.
-  const faces8 = { U:uFace, R:rFace, F:fFace, D:dFace, L:lFace, B:bFace };
-  const centerColor = { U:"W", R:"R", F:"G", D:"Y", L:"O", B:"B" };
-
-  const ringFromIdx9 = (idx9) => {
-    // idx9 layout:
-    // 0 1 2
-    // 3 4 5
-    // 6 7 8
-    // ring indices:
-    // 0 1 2
-    // 7 C 3
-    // 6 5 4
-    // So mapping idx9 -> ring:
-    const map = {0:0,1:1,2:2,5:3,8:4,7:5,6:6,3:7};
-    return map[idx9];
-  };
-
-  const keyPN = (p,n) => `${p[0]},${p[1]},${p[2]}|${n[0]},${n[1]},${n[2]}`;
-  const colorAt = new Map();
-
-  for (const face of ["U","R","F","D","L","B"]) {
-    for (let idx9=0; idx9<9; idx9++){
-      if (idx9===4) continue;
-      const {p,n} = faceletToXYZ(face, idx9);
-      const ring = ringFromIdx9(idx9);
-      const c = faces8[face][ring];
-      colorAt.set(keyPN(p,n), c);
-    }
-    // center (not needed for cubies, but keep consistent)
-    const {p,n} = faceletToXYZ(face, 4);
-    colorAt.set(keyPN(p,n), centerColor[face]);
-  }
-
-  const getColor = (p,n) => {
-    const v = colorAt.get(keyPN(p,n));
-    if (!v) throw new Error(`Missing color at p=${p} n=${n}`);
-    return v;
-  };
-
-  // Corner positions as sticker-center coordinates p with |x|=|y|=|z|=1
-  const cornerP = [
-    [ 1, 1, 1],  // URF
-    [ 1, 1,-1],  // URB
-    [-1, 1,-1],  // UBL
-    [-1, 1, 1],  // ULF
-    [ 1,-1, 1],  // DRF
-    [ 1,-1,-1],  // DRB
-    [-1,-1,-1],  // DBL
-    [-1,-1, 1],  // DLF
-  ];
-
-  // Edge positions p with exactly one coordinate 0
-  const edgeP = [
-    [ 0, 1, 1],  // UF
-    [ 1, 1, 0],  // UR
-    [ 0, 1,-1],  // UB
-    [-1, 1, 0],  // UL
-    [ 0,-1, 1],  // DF
-    [ 1,-1, 0],  // DR
-    [ 0,-1,-1],  // DB
-    [-1,-1, 0],  // DL
-    [ 1, 0, 1],  // FR
-    [ 1, 0,-1],  // BR
-    [-1, 0,-1],  // BL
-    [-1, 0, 1],  // FL
-  ];
-
-  // Solved cubie color sets under locked scheme.
-  const cornerColors = [
-    ["W","R","G"], // URF
-    ["W","R","B"], // URB
-    ["W","B","O"], // UBL
-    ["W","O","G"], // ULF
-    ["Y","G","R"], // DRF
-    ["Y","R","B"], // DRB
-    ["Y","B","O"], // DBL
-    ["Y","O","G"], // DLF
-  ];
-  const edgeColors = [
-    ["W","G"], // UF
-    ["W","R"], // UR
-    ["W","B"], // UB
-    ["W","O"], // UL
-    ["Y","G"], // DF
-    ["Y","R"], // DR
-    ["Y","B"], // DB
-    ["Y","O"], // DL
-    ["G","R"], // FR
-    ["B","R"], // BR
-    ["B","O"], // BL
-    ["G","O"], // FL
-  ];
-
-  const cornerMap = new Map();
-  for (let i=0;i<8;i++) cornerMap.set([...cornerColors[i]].sort().join(""), i);
-  const edgeMap = new Map();
-  for (let i=0;i<12;i++) edgeMap.set([...edgeColors[i]].sort().join(""), i);
-
-  const state = { cp:new Array(8), co:new Array(8), ep:new Array(12), eo:new Array(12).fill(0) };
+  const cp = new Array(8);
+  const co = new Array(8);
+  const ep = new Array(12);
+  const eo = new Array(12).fill(0);
 
   // corners
-  for (let pos=0; pos<8; pos++){
-    const p = cornerP[pos];
-    const nx = [Math.sign(p[0]),0,0];
-    const ny = [0,Math.sign(p[1]),0];
-    const nz = [0,0,Math.sign(p[2])];
-    const cY = getColor(p, ny); // U/D sticker
-    const cX = getColor(p, nx); // R/L sticker
-    const cZ = getColor(p, nz); // F/B sticker
-    const cols=[cY,cX,cZ];
-    const cubie = cornerMap.get([...cols].sort().join(""));
-    if (cubie===undefined) throw new Error(`Invalid corner colors at position ${pos}: ${cols.join("")}`);
-    state.cp[pos]=cubie;
+  for (let pos = 0; pos < 8; pos++) {
+    const stickers3 = CORNER_POS_STICKERS[pos];
+    const colors3 = stickers3.map(stickerAt);
 
-    // orientation: where is the U/D color (W/Y)?
-    const udOn = (cY==="W"||cY==="Y") ? 0 : ((cX==="W"||cX==="Y") ? 1 : 2);
-    state.co[pos]=udOn;
+    const cubieId = findCornerCubieId(colors3);
+    if (cubieId < 0) {
+      throw new Error(`Invalid corner colors at position ${pos}: ${colors3.join(",")}`);
+    }
+    cp[pos] = cubieId;
+
+    // NEW:
+    co[pos] = cornerOriFromCubieAndObserved(cubieId, colors3);
   }
 
   // edges
-  for (let pos=0; pos<12; pos++){
-    const p=edgeP[pos];
-    let n1, n2;
-    if (p[0]===0){ n1=[0,Math.sign(p[1]),0]; n2=[0,0,Math.sign(p[2])]; }     // U/D + F/B
-    else if (p[1]===0){ n1=[Math.sign(p[0]),0,0]; n2=[0,0,Math.sign(p[2])]; } // R/L + F/B
-    else { n1=[0,Math.sign(p[1]),0]; n2=[Math.sign(p[0]),0,0]; }             // U/D + R/L
+  for (let pos = 0; pos < 12; pos++) {
+    const stickers2 = EDGE_POS_STICKERS[pos];
+    const colors2 = stickers2.map(stickerAt);
 
-    const c1=getColor(p,n1);
-    const c2=getColor(p,n2);
-    const cols=[c1,c2];
-    const cubie=edgeMap.get([...cols].sort().join(""));
-    if (cubie===undefined) throw new Error(`Invalid edge colors at position ${pos}: ${cols.join("")}`);
-    state.ep[pos]=cubie;
-
-    // orientation (standard): if edge has W/Y, it's oriented when W/Y is on U/D.
-    // else (middle slice), oriented when F/B color is on F/B.
-    let ori=0;
-    if (c1==="W"||c1==="Y"||c2==="W"||c2==="Y"){
-      const udStickerOnN1 = (n1[1]!==0); // n1 is U/D for cases where p[0]==0 or p[2]==0; for p[1]==0 (R/L+F/B), n1 is R/L
-      // Determine which normal is U/D if present
-      if (n1[1]!==0) ori = (c1==="W"||c1==="Y") ? 0 : 1;
-      else if (n2[1]!==0) ori = (c2==="W"||c2==="Y") ? 0 : 1;
-      else ori = 0;
-    } else {
-      // no W/Y: check whether the F/B color sits on F/B normal (n with z!=0)
-      const fbOn1 = n1[2]!==0;
-      ori = fbOn1 ? 0 : 1;
+    const cubieId = findEdgeCubieId(colors2);
+    if (cubieId < 0) {
+      throw new Error(`Invalid edge colors at position ${pos}: ${colors2.join(",")}`);
     }
-    state.eo[pos]=ori&1;
+    ep[pos] = cubieId;
+    eo[pos] = edgeOriFromCubieAndObserved(cubieId, colors2);
   }
 
-  // validate orientation sums
-  const eoSum = state.eo.reduce((a,b)=>a+b,0);
+  // orientation constraints
+  const eoSum = eo.reduce((a,b)=>a+b,0);
   if (eoSum % 2 !== 0) throw new Error("Edge flip parity error");
-  const coSum = state.co.reduce((a,b)=>a+b,0);
+  const coSum = co.reduce((a,b)=>a+b,0);
   if (coSum % 3 !== 0) throw new Error("Corner twist sum error");
 
-  // parity check
-  function parity(arr){
-    let p=0;
-    for (let i=0;i<arr.length;i++){
-      for (let j=i+1;j<arr.length;j++){
-        if (arr[i]>arr[j]) p^=1;
-      }
-    }
-    return p;
+  // permutation parity
+  if (parityOfPermutation(cp) !== parityOfPermutation(ep)) {
+    throw new Error("Permutation parity mismatch");
   }
-  if (parity(state.cp) !== parity(state.ep)) throw new Error("Permutation parity mismatch");
 
-  return state;
+  return { cp, co, ep, eo };
 }
-
 
 // Corner positions: 0 URF, 1 UFL, 2 ULB, 3 UBR, 4 DFR, 5 DLF, 6 DBL, 7 DRB
 // Edge positions:   0 UR,  1 UF,  2 UL,  3 UB,  4 DR,  5 DF,  6 DL,  7 DB,  8 FR,  9 FL,  10 BL, 11 BR
@@ -1618,7 +1491,7 @@ function idaPhase1(startState, maxDepth = 12) {
     const eo = getEOCoord(startState.eo);
     const co = getCOCoord(startState.co);
     const uds = getUDSliceCoord(startState.ep);
-    return h1(eo, co, uds, prEOCO, prUDSCO);
+    return h1(eo, co, uds);
   })();
 
   for (let depth = bound; depth <= maxDepth; depth++) {
@@ -1637,7 +1510,7 @@ function idaPhase2(startState, maxDepth = 18) {
     const cp = getCPCoord(state.cp);
     const ude = getUDECoord(state.ep);
     const ese = getESECoord(state.ep);
-    const hv = h2(cp, ude, ese, prCP, prUDE);
+    const hv = h2(cp, ude);
     if (g + hv > bound) return g + hv;
     if (cp === 0 && ude === 0 && ese === 0) return true;
 
@@ -1659,14 +1532,14 @@ function idaPhase2(startState, maxDepth = 18) {
   }
 
   let bound = (() => {
-    const cp = getCPCoord(startStateG1.cp);
-    const ude = getUDECoord(startStateG1.ep);
-    const ese = getESECoord(startStateG1.ep);
-    return h2(cp, ude, ese, prCP, prUDE);
+    const cp = getCPCoord(startState.cp);
+    const ude = getUDECoord(startState.ep);
+    const ese = getESECoord(startState.ep);
+    return h2(cp, ude);
   })();
 
   for (let depth = bound; depth <= maxDepth; depth++) {
-    const res = dfs(structuredClone(startStateG1), 0, depth, null);
+    const res = dfs(structuredClone(startState), 0, depth, null);
     if (res === true) return path.slice();
     if (res === Infinity) break;
     bound = res;
