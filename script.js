@@ -880,45 +880,45 @@ function stickersToCubie() {
 // Edge positions:   0 UR,  1 UF,  2 UL,  3 UB,  4 DR,  5 DF,  6 DL,  7 DB,  8 FR,  9 FL,  10 BL, 11 BR
 
 const MOVE_U = {
-  cpPerm: [1, 2, 3, 0, 4, 5, 6, 7],
   coAdd:  [0, 0, 0, 0, 0, 0, 0, 0],
-  epPerm: [1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10, 11],
+  cpPerm: [3, 0, 1, 2, 4, 5, 6, 7],
   eoXor:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  epPerm: [3, 0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11],
 };
 
 const MOVE_R = {
-  cpPerm: [4, 1, 2, 0, 7, 5, 6, 3],
   coAdd:  [2, 0, 0, 1, 1, 0, 0, 2],
-  epPerm: [8, 1, 2, 3, 11, 5, 6, 7, 4, 9, 10, 0],
+  cpPerm: [4, 1, 2, 0, 7, 5, 6, 3],
   eoXor:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  epPerm: [8, 1, 2, 3, 11, 5, 6, 7, 4, 9, 10, 0],
 };
 
 const MOVE_F = {
-  cpPerm: [1, 5, 2, 3, 0, 4, 6, 7],
   coAdd:  [1, 2, 0, 0, 2, 1, 0, 0],
-  epPerm: [0, 9, 2, 3, 4, 8, 6, 7, 1, 5, 10, 11],
+  cpPerm: [1, 5, 2, 3, 0, 4, 6, 7],
   eoXor:  [0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0],
+  epPerm: [0, 9, 2, 3, 4, 8, 6, 7, 1, 5, 10, 11],
 };
 
 const MOVE_D = {
-  cpPerm: [0, 1, 2, 3, 7, 4, 5, 6],
   coAdd:  [0, 0, 0, 0, 0, 0, 0, 0],
-  epPerm: [0, 1, 2, 3, 7, 4, 5, 6, 8, 9, 10, 11],
+  cpPerm: [0, 1, 2, 3, 5, 6, 7, 4],
   eoXor:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  epPerm: [0, 1, 2, 3, 5, 6, 7, 4, 8, 9, 10, 11],
 };
 
 const MOVE_L = {
-  cpPerm: [0, 5, 1, 3, 4, 6, 2, 7],
   coAdd:  [0, 1, 2, 0, 0, 2, 1, 0],
-  epPerm: [0, 1, 9, 3, 4, 5, 10, 7, 8, 6, 2, 11],
+  cpPerm: [0, 2, 6, 3, 4, 1, 5, 7],
   eoXor:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  epPerm: [0, 1, 10, 3, 4, 5, 9, 7, 8, 2, 6, 11],
 };
 
 const MOVE_B = {
-  cpPerm: [0, 1, 3, 7, 4, 5, 2, 6],
   coAdd:  [0, 0, 1, 2, 0, 0, 2, 1],
-  epPerm: [0, 1, 2, 10, 4, 5, 6, 11, 8, 9, 7, 3],
+  cpPerm: [0, 1, 3, 7, 4, 5, 2, 6],
   eoXor:  [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1],
+  epPerm: [0, 1, 2, 11, 4, 5, 6, 10, 8, 9, 3, 7],
 };
 
 const BASE_MOVES = { U: MOVE_U, R: MOVE_R, F: MOVE_F, D: MOVE_D, L: MOVE_L, B: MOVE_B };
@@ -1810,6 +1810,32 @@ function showCube(){
 setSolvedCube();
 updateCubeDisplay();
 
+function buildBaseMoveFromStickerTurn(face) {
+  setSolvedCube();
+  const solved = stickersToCubie();
+
+  setSolvedCube();
+  applyQuarterTurn(face, true);     // your "clockwise"
+  const turned = stickersToCubie();
+
+  const cpPerm = new Array(8);
+  const coAdd  = new Array(8);
+  const epPerm = new Array(12);
+  const eoXor  = new Array(12);
+
+  for (let i = 0; i < 8; i++) {
+    const cubie = turned.cp[i];
+    cpPerm[i] = cubie;          // on solved cube, cubieId == its home position
+    coAdd[i]  = turned.co[i];
+  }
+  for (let i = 0; i < 12; i++) {
+    const cubie = turned.ep[i];
+    epPerm[i] = cubie;          // same idea
+    eoXor[i]  = turned.eo[i];
+  }
+
+  return { cpPerm, coAdd, epPerm, eoXor };
+}
 
 // Build tables on page load (blocking UI with overlay until ready)
 window.addEventListener("load", () => { ensureTablesBuilt(); });
