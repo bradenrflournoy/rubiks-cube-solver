@@ -644,7 +644,7 @@ rPTurnButton.onclick = function(){
 // Corner positions in standard order: 0 URF, 1 UFL, 2 ULB, 3 UBR, 4 DFR, 5 DLF, 6 DBL, 7 DRB
 const CORNER_POS_STICKERS = [
   // URF
-  [ {f:"U", i:2}, {f:"R", i:0}, {f:"F", i:2} ],
+  [ {f:"U", i:4}, {f:"R", i:0}, {f:"F", i:2} ],
   // UFL
   [ {f:"U", i:6}, {f:"F", i:0}, {f:"L", i:2} ],
   // ULB
@@ -826,118 +826,180 @@ function parityOfPermutation(p) {
 }
 
 function stickersToCubie() {
-  const cp = new Array(8);
-  const co = new Array(8);
-  const ep = new Array(12);
-  const eo = new Array(12);
+  // Build a lookup from (p,n) -> color by iterating all 48 non-center facelets.
+  // Your UI stores each face as 8 ring stickers (idx8 0..7) plus a fixed center.
+  const faces8 = { U:uFace, R:rFace, F:fFace, D:dFace, L:lFace, B:bFace };
+  const centerColor = { U:"W", R:"R", F:"G", D:"Y", L:"O", B:"B" };
 
-  // Build 9-sticker faces (row-major) including fixed centers (locked color scheme)
-  const FACE9 = {
-    U: faceRingTo9(uFace, w),
-    D: faceRingTo9(dFace, y),
-    F: faceRingTo9(fFace, g),
-    B: faceRingTo9(bFace, b),
-    L: faceRingTo9(lFace, o),
-    R: faceRingTo9(rFace, r),
+  const ringFromIdx9 = (idx9) => {
+    // idx9 layout:
+    // 0 1 2
+    // 3 4 5
+    // 6 7 8
+    // ring indices:
+    // 0 1 2
+    // 7 C 3
+    // 6 5 4
+    // So mapping idx9 -> ring:
+    const map = {0:0,1:1,2:2,5:3,8:4,7:5,6:6,3:7};
+    return map[idx9];
   };
 
-  function colorAtFacelet(face, idx9) {
-    return FACE9[face][idx9];
+  const keyPN = (p,n) => `${p[0]},${p[1]},${p[2]}|${n[0]},${n[1]},${n[2]}`;
+  const colorAt = new Map();
+
+  for (const face of ["U","R","F","D","L","B"]) {
+    for (let idx9=0; idx9<9; idx9++){
+      if (idx9===4) continue;
+      const {p,n} = faceletToXYZ(face, idx9);
+      const ring = ringFromIdx9(idx9);
+      const c = faces8[face][ring];
+      colorAt.set(keyPN(p,n), c);
+    }
+    // center (not needed for cubies, but keep consistent)
+    const {p,n} = faceletToXYZ(face, 4);
+    colorAt.set(keyPN(p,n), centerColor[face]);
   }
 
-  // Helper: return sticker descriptor list for a cubie at position p=(x,y,z).
-  // For each outward normal present at that position, we compute its (face, idx9).
-  function stickersForCorner(p) {
-    const [x,yv,z] = p;
-    const normals = [
-      [0, yv, 0],   // U or D
-      [x, 0, 0],    // R or L
-      [0, 0, z],    // F or B
-    ];
-    return normals.map(n => xyzToFacelet(p, n)).map(({face, idx9}) => ({f: face, idx9}));
-  }
+  const getColor = (p,n) => {
+    const v = colorAt.get(keyPN(p,n));
+    if (!v) throw new Error(`Missing color at p=${p} n=${n}`);
+    return v;
+  };
 
-  function stickersForEdge(p, normals) {
-    return normals.map(n => xyzToFacelet(p, n)).map(({face, idx9}) => ({f: face, idx9}));
-  }
-
-  // Standard order positions
-  const CORNER_POS = [
+  // Corner positions as sticker-center coordinates p with |x|=|y|=|z|=1
+  const cornerP = [
     [ 1, 1, 1],  // URF
-    [-1, 1, 1],  // UFL
-    [-1, 1,-1],  // ULB
-    [ 1, 1,-1],  // UBR
-    [ 1,-1, 1],  // DFR
-    [-1,-1, 1],  // DLF
-    [-1,-1,-1],  // DBL
+    [ 1, 1,-1],  // URB
+    [-1, 1,-1],  // UBL
+    [-1, 1, 1],  // ULF
+    [ 1,-1, 1],  // DRF
     [ 1,-1,-1],  // DRB
+    [-1,-1,-1],  // DBL
+    [-1,-1, 1],  // DLF
   ];
 
-  const EDGE_POS = [
-    [ 1, 1, 0], // UR
-    [ 0, 1, 1], // UF
-    [-1, 1, 0], // UL
-    [ 0, 1,-1], // UB
-    [ 1,-1, 0], // DR
-    [ 0,-1, 1], // DF
-    [-1,-1, 0], // DL
-    [ 0,-1,-1], // DB
-    [ 1, 0, 1], // FR
-    [-1, 0, 1], // FL
-    [-1, 0,-1], // BL
-    [ 1, 0,-1], // BR
+  // Edge positions p with exactly one coordinate 0
+  const edgeP = [
+    [ 0, 1, 1],  // UF
+    [ 1, 1, 0],  // UR
+    [ 0, 1,-1],  // UB
+    [-1, 1, 0],  // UL
+    [ 0,-1, 1],  // DF
+    [ 1,-1, 0],  // DR
+    [ 0,-1,-1],  // DB
+    [-1,-1, 0],  // DL
+    [ 1, 0, 1],  // FR
+    [ 1, 0,-1],  // BR
+    [-1, 0,-1],  // BL
+    [-1, 0, 1],  // FL
   ];
+
+  // Solved cubie color sets under locked scheme.
+  const cornerColors = [
+    ["W","R","G"], // URF
+    ["W","R","B"], // URB
+    ["W","B","O"], // UBL
+    ["W","O","G"], // ULF
+    ["Y","G","R"], // DRF
+    ["Y","R","B"], // DRB
+    ["Y","B","O"], // DBL
+    ["Y","O","G"], // DLF
+  ];
+  const edgeColors = [
+    ["W","G"], // UF
+    ["W","R"], // UR
+    ["W","B"], // UB
+    ["W","O"], // UL
+    ["Y","G"], // DF
+    ["Y","R"], // DR
+    ["Y","B"], // DB
+    ["Y","O"], // DL
+    ["G","R"], // FR
+    ["B","R"], // BR
+    ["B","O"], // BL
+    ["G","O"], // FL
+  ];
+
+  const cornerMap = new Map();
+  for (let i=0;i<8;i++) cornerMap.set([...cornerColors[i]].sort().join(""), i);
+  const edgeMap = new Map();
+  for (let i=0;i<12;i++) edgeMap.set([...edgeColors[i]].sort().join(""), i);
+
+  const state = { cp:new Array(8), co:new Array(8), ep:new Array(12), eo:new Array(12).fill(0) };
 
   // corners
-  for (let pos = 0; pos < 8; pos++) {
-    const p = CORNER_POS[pos];
-    const stickers3 = stickersForCorner(p);
+  for (let pos=0; pos<8; pos++){
+    const p = cornerP[pos];
+    const nx = [Math.sign(p[0]),0,0];
+    const ny = [0,Math.sign(p[1]),0];
+    const nz = [0,0,Math.sign(p[2])];
+    const cY = getColor(p, ny); // U/D sticker
+    const cX = getColor(p, nx); // R/L sticker
+    const cZ = getColor(p, nz); // F/B sticker
+    const cols=[cY,cX,cZ];
+    const cubie = cornerMap.get([...cols].sort().join(""));
+    if (cubie===undefined) throw new Error(`Invalid corner colors at position ${pos}: ${cols.join("")}`);
+    state.cp[pos]=cubie;
 
-    const colors3 = stickers3.map(s => colorAtFacelet(s.f, s.idx9));
-    const id = findCornerCubieId(colors3);
-    if (id < 0) {
-      throw new Error("Invalid corner colors at position " + pos + ": " + colors3.join(","));
-    }
-    cp[pos] = id;
-
-    // Convert to the format expected by cornerOrientationFromStickers: {f: "..."} list
-    const stickersFmt = stickers3.map(s => ({f: s.f, i: s.idx9}));
-    co[pos] = cornerOrientationFromStickers(stickersFmt, colors3);
+    // orientation: where is the U/D color (W/Y)?
+    const udOn = (cY==="W"||cY==="Y") ? 0 : ((cX==="W"||cX==="Y") ? 1 : 2);
+    state.co[pos]=udOn;
   }
 
-  // edges (order: UD layer edges then slice edges)
-  for (let pos = 0; pos < 12; pos++) {
-    const [x,yv,z] = EDGE_POS[pos];
-    const normals = [];
-    if (yv !== 0) normals.push([0, yv, 0]); // U/D
-    if (x  !== 0) normals.push([x, 0, 0]);  // R/L
-    if (z  !== 0) normals.push([0, 0, z]);  // F/B
+  // edges
+  for (let pos=0; pos<12; pos++){
+    const p=edgeP[pos];
+    let n1, n2;
+    if (p[0]===0){ n1=[0,Math.sign(p[1]),0]; n2=[0,0,Math.sign(p[2])]; }     // U/D + F/B
+    else if (p[1]===0){ n1=[Math.sign(p[0]),0,0]; n2=[0,0,Math.sign(p[2])]; } // R/L + F/B
+    else { n1=[0,Math.sign(p[1]),0]; n2=[Math.sign(p[0]),0,0]; }             // U/D + R/L
 
-    const stickers2 = stickersForEdge(EDGE_POS[pos], normals);
-    const colors2 = stickers2.map(s => colorAtFacelet(s.f, s.idx9));
-    const id = findEdgeCubieId(colors2);
-    if (id < 0) {
-      throw new Error("Invalid edge colors at position " + pos + ": " + colors2.join(","));
+    const c1=getColor(p,n1);
+    const c2=getColor(p,n2);
+    const cols=[c1,c2];
+    const cubie=edgeMap.get([...cols].sort().join(""));
+    if (cubie===undefined) throw new Error(`Invalid edge colors at position ${pos}: ${cols.join("")}`);
+    state.ep[pos]=cubie;
+
+    // orientation (standard): if edge has W/Y, it's oriented when W/Y is on U/D.
+    // else (middle slice), oriented when F/B color is on F/B.
+    let ori=0;
+    if (c1==="W"||c1==="Y"||c2==="W"||c2==="Y"){
+      const udStickerOnN1 = (n1[1]!==0); // n1 is U/D for cases where p[0]==0 or p[2]==0; for p[1]==0 (R/L+F/B), n1 is R/L
+      // Determine which normal is U/D if present
+      if (n1[1]!==0) ori = (c1==="W"||c1==="Y") ? 0 : 1;
+      else if (n2[1]!==0) ori = (c2==="W"||c2==="Y") ? 0 : 1;
+      else ori = 0;
+    } else {
+      // no W/Y: check whether the F/B color sits on F/B normal (n with z!=0)
+      const fbOn1 = n1[2]!==0;
+      ori = fbOn1 ? 0 : 1;
     }
-    ep[pos] = id;
-
-    const stickersFmt = stickers2.map(s => ({f: s.f, i: s.idx9}));
-    eo[pos] = edgeOrientationFromStickers(pos, stickersFmt, colors2);
+    state.eo[pos]=ori&1;
   }
 
-  // legality checks
-  const eoSum = eo.reduce((a, v) => a + v, 0);
-  if (eoSum % 2 !== 0) throw new Error("Illegal cube: edge flip parity");
+  // validate orientation sums
+  const eoSum = state.eo.reduce((a,b)=>a+b,0);
+  if (eoSum % 2 !== 0) throw new Error("Edge flip parity error");
+  const coSum = state.co.reduce((a,b)=>a+b,0);
+  if (coSum % 3 !== 0) throw new Error("Corner twist sum error");
 
-  const coSum = co.reduce((a, v) => a + v, 0);
-  if (coSum % 3 !== 0) throw new Error("Illegal cube: corner twist parity");
+  // parity check
+  function parity(arr){
+    let p=0;
+    for (let i=0;i<arr.length;i++){
+      for (let j=i+1;j<arr.length;j++){
+        if (arr[i]>arr[j]) p^=1;
+      }
+    }
+    return p;
+  }
+  if (parity(state.cp) !== parity(state.ep)) throw new Error("Permutation parity mismatch");
 
-  const cpParity = parityOfPermutation(cp);
-  const epParity = parityOfPermutation(ep);
-  if (cpParity !== epParity) throw new Error("Illegal cube: permutation parity");
-
-  return { cp, co, ep, eo };
+  return state;
 }
+
 
 // Corner positions: 0 URF, 1 UFL, 2 ULB, 3 UBR, 4 DFR, 5 DLF, 6 DBL, 7 DRB
 // Edge positions:   0 UR,  1 UF,  2 UL,  3 UB,  4 DR,  5 DF,  6 DL,  7 DB,  8 FR,  9 FL,  10 BL, 11 BR
@@ -1141,138 +1203,397 @@ const MOVES_18 = [
 // Phase 2 allowed moves
 const MOVES_10 = ["U","U2","U'","D","D2","D'","R2","L2","F2","B2"];
 
-function buildPhase1Pruning() {
-  const prEOCO = new Uint8Array(2048 * 2187);
-  const prUDSCO = new Uint8Array(495 * 2187);
-  prEOCO.fill(0xFF);
-  prUDSCO.fill(0xFF);
+// ---------- Fixed: structuredClone fallback ----------
+const _clone = (obj) => (typeof structuredClone === "function" ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)));
 
-  // Start from solved
-  const solved = {
-    cp: [0,1,2,3,4,5,6,7],
-    co: [0,0,0,0,0,0,0,0],
-    ep: [0,1,2,3,4,5,6,7,8,9,10,11],
-    eo: [0,0,0,0,0,0,0,0,0,0,0,0],
-  };
+// ---------- Fixed: cancelable timers for scramble/execute ----------
+let _pendingTimers = [];
+function _clearTimers() { for (const t of _pendingTimers) clearTimeout(t); _pendingTimers = []; }
+function _setLater(fn, ms) { const id = setTimeout(fn, ms); _pendingTimers.push(id); return id; }
 
-  const qState = [];
-  const qDepth = [];
-  const push = (st, d) => { qState.push(st); qDepth.push(d); };
-
-  const eo0 = getEOCoord(solved.eo);
-  const co0 = getCOCoord(solved.co);
-  const uds0 = getUDSliceCoord(solved.ep);
-  prEOCO[idxEOCO(eo0, co0)] = 0;
-  prUDSCO[idxUDSCO(uds0, co0)] = 0;
-  push(structuredClone(solved), 0);
-
-  // BFS
-  let head = 0;
-  while (head < qState.length) {
-    const st = qState[head];
-    const d = qDepth[head];
-    head++;
-
-    for (const mv of MOVES_18) {
-      const ns = structuredClone(st);
-      applyMoveCubie(ns, mv);
-
-      const eo = getEOCoord(ns.eo);
-      const co = getCOCoord(ns.co);
-      const uds = getUDSliceCoord(ns.ep);
-
-      const i1 = idxEOCO(eo, co);
-      const i2 = idxUDSCO(uds, co);
-
-      // We only need to enqueue if we’re discovering new depth in either table.
-      let discovered = false;
-
-      if (prEOCO[i1] === 0xFF) { prEOCO[i1] = d + 1; discovered = true; }
-      if (prUDSCO[i2] === 0xFF) { prUDSCO[i2] = d + 1; discovered = true; }
-
-      // Enqueue if progress
-      if (discovered) push(ns, d + 1);
-    }
-  }
-
-  return { prEOCO, prUDSCO };
+// ---------- UI: loading overlay + control lock ----------
+let _tablesReady = false;
+let _loadingOverlay = null;
+function _setControlsEnabled(enabled) {
+  const controls = document.getElementById("controls");
+  if (!controls) return;
+  controls.style.pointerEvents = enabled ? "auto" : "none";
+  controls.style.opacity = enabled ? "1" : "0.5";
+}
+function _showLoading(msg) {
+  if (_loadingOverlay) return;
+  _loadingOverlay = document.createElement("div");
+  _loadingOverlay.id = "solverLoadingOverlay";
+  _loadingOverlay.style.position = "fixed";
+  _loadingOverlay.style.inset = "0";
+  _loadingOverlay.style.display = "flex";
+  _loadingOverlay.style.alignItems = "center";
+  _loadingOverlay.style.justifyContent = "center";
+  _loadingOverlay.style.background = "rgba(0,0,0,0.7)";
+  _loadingOverlay.style.zIndex = "9999";
+  _loadingOverlay.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+  _loadingOverlay.style.color = "white";
+  _loadingOverlay.style.padding = "24px";
+  _loadingOverlay.style.textAlign = "center";
+  _loadingOverlay.innerHTML = `<div style="max-width:520px">
+      <div style="font-size:22px; font-weight:700; margin-bottom:10px">Building solver tables…</div>
+      <div id="solverLoadingMsg" style="font-size:14px; opacity:0.9">${msg || ""}</div>
+      <div style="margin-top:14px; font-size:12px; opacity:0.75">This happens once per page load.</div>
+    </div>`;
+  document.body.appendChild(_loadingOverlay);
+  _setControlsEnabled(false);
+}
+function _updateLoading(msg) {
+  const el = document.getElementById("solverLoadingMsg");
+  if (el) el.textContent = msg;
+}
+function _hideLoading() {
+  if (_loadingOverlay) _loadingOverlay.remove();
+  _loadingOverlay = null;
+  _setControlsEnabled(true);
 }
 
-function buildPhase2Pruning() {
-  const prCP = new Uint8Array(40320 * 24);
-  const prUDE = new Uint8Array(40320 * 24);
-  prCP.fill(0xFF);
-  prUDE.fill(0xFF);
-
-  const solved = {
-    cp: [0,1,2,3,4,5,6,7],
-    co: [0,0,0,0,0,0,0,0],
-    ep: [0,1,2,3,4,5,6,7,8,9,10,11],
-    eo: [0,0,0,0,0,0,0,0,0,0,0,0],
-  };
-
-  const qState = [];
-  const qDepth = [];
-  const push = (st, d) => { qState.push(st); qDepth.push(d); };
-
-  const cp0 = getCPCoord(solved.cp);
-  const ude0 = getUDECoord(solved.ep);
-  const ese0 = getESECoord(solved.ep);
-  prCP[idxCP_ESE(cp0, ese0)] = 0;
-  prUDE[idxUDE_ESE(ude0, ese0)] = 0;
-  push(structuredClone(solved), 0);
-
-  let head = 0;
-  while (head < qState.length) {
-    const st = qState[head];
-    const d = qDepth[head];
-    head++;
-
-    for (const mv of MOVES_10) {
-      const ns = structuredClone(st);
-      applyMoveCubie(ns, mv);
-
-      // In phase 2 we assume we stay in G1; these coords are valid
-      const cp = getCPCoord(ns.cp);
-      const ude = getUDECoord(ns.ep);
-      const ese = getESECoord(ns.ep);
-
-      const i1 = idxCP_ESE(cp, ese);
-      const i2 = idxUDE_ESE(ude, ese);
-
-      let discovered = false;
-      if (prCP[i1] === 0xFF) { prCP[i1] = d + 1; discovered = true; }
-      if (prUDE[i2] === 0xFF) { prUDE[i2] = d + 1; discovered = true; }
-
-      if (discovered) push(ns, d + 1);
-    }
+// ---------- Combinatorics ----------
+function unrankPerm8(idx) {
+  // factoradic -> permutation of [0..7]
+  const items = [0,1,2,3,4,5,6,7];
+  const perm = new Array(8);
+  let x = idx;
+  for (let i = 7; i >= 0; i--) {
+    const f = FACT[i];
+    const q = Math.floor(x / f);
+    x = x % f;
+    perm[7 - i] = items.splice(q, 1)[0];
   }
+  return perm;
+}
+function rankPerm8(p) { return rankPerm(p); } // existing
 
-  return { prCP, prUDE };
+function unrankUDSliceCoord(coord) {
+  // coord 0..494, invert to colex rank
+  let rank = 494 - coord;
+  const pos = new Array(4);
+  // unrank colex: find largest n such that C(n,k) <= rank, descending k
+  for (let k = 4; k >= 1; k--) {
+    let n = 11;
+    while (n >= 0 && NCK[n][k] > rank) n--;
+    pos[k-1] = n;
+    rank -= NCK[n][k];
+    n--;
+  }
+  pos.sort((a,b)=>a-b);
+  return pos;
 }
 
-function h1(eoCoord, coCoord, udsCoord, prEOCO, prUDSCO) {
-  const a = prEOCO[idxEOCO(eoCoord, coCoord)];
-  const b = prUDSCO[idxUDSCO(udsCoord, coCoord)];
+// ---------- Coordinate move tables + pruning (built once) ----------
+let _eoMove=null, _coMove=null, _udsMove=null;
+let _cpMove=null, _udeMove=null;
+let _prEOUDS=null, _prCOUDS=null, _prCP=null, _prUDE=null;
+
+function _stateFromEO(eoCoord){
+  const st={cp:[0,1,2,3,4,5,6,7], co:[0,0,0,0,0,0,0,0], ep:[0,1,2,3,4,5,6,7,8,9,10,11], eo:new Array(12).fill(0)};
+  // decode eoCoord into first 11 bits, last is parity
+  let parity=0;
+  for (let i=0;i<11;i++){
+    const bit=(eoCoord>>i)&1;
+    st.eo[i]=bit; parity^=bit;
+  }
+  st.eo[11]=parity;
+  return st;
+}
+function _eoCoordFromState(st){ return getEOCoord(st.eo); }
+
+function _stateFromCO(coCoord){
+  const st={cp:[0,1,2,3,4,5,6,7], co:new Array(8).fill(0), ep:[0,1,2,3,4,5,6,7,8,9,10,11], eo:new Array(12).fill(0)};
+  let sum=0, x=coCoord;
+  for (let i=0;i<7;i++){
+    const d = x%3; x=Math.floor(x/3);
+    st.co[i]=d; sum+=d;
+  }
+  st.co[7]=(3-(sum%3))%3;
+  return st;
+}
+function _coCoordFromState(st){ return getCOCoord(st.co); }
+
+function _stateFromUDS(udsCoord){
+  const st={cp:[0,1,2,3,4,5,6,7], co:[0,0,0,0,0,0,0,0], ep:new Array(12), eo:new Array(12).fill(0)};
+  const pos = unrankUDSliceCoord(udsCoord); // positions that should hold slice edges
+  const sliceIds=[8,9,10,11];
+  const otherIds=[0,1,2,3,4,5,6,7];
+  // Fill positions with a deterministic arrangement
+  let si=0, oi=0;
+  for (let i=0;i<12;i++){
+    if (pos.includes(i)) st.ep[i]=sliceIds[si++];
+    else st.ep[i]=otherIds[oi++];
+  }
+  return st;
+}
+function _udsCoordFromState(st){ return getUDSliceCoord(st.ep); }
+
+function _stateFromCP(cpCoord){
+  const st={cp:unrankPerm8(cpCoord), co:[0,0,0,0,0,0,0,0], ep:[0,1,2,3,4,5,6,7,8,9,10,11], eo:new Array(12).fill(0)};
+  return st;
+}
+function _cpCoordFromState(st){ return getCPCoord(st.cp); }
+
+function _stateFromUDE(udeCoord){
+  const st={cp:[0,1,2,3,4,5,6,7], co:[0,0,0,0,0,0,0,0], ep:new Array(12), eo:new Array(12).fill(0)};
+  const p = unrankPerm8(udeCoord);
+  for (let i=0;i<8;i++) st.ep[i]=p[i];
+  // remaining edges fixed
+  st.ep[8]=8; st.ep[9]=9; st.ep[10]=10; st.ep[11]=11;
+  return st;
+}
+function _udeCoordFromState(st){ return getUDECoord(st.ep); }
+
+function _applyMoveClone(st, mv){
+  const ns=_clone(st);
+  applyMoveCubie(ns, mv);
+  return ns;
+}
+
+function _buildMoveTablesAsync(updateFn){
+  return new Promise((resolve)=>{
+    _updateLoading("Building move tables…");
+    // Allocate
+    _eoMove = new Uint16Array(2048*18);
+    _coMove = new Uint16Array(2187*18);
+    _udsMove = new Uint16Array(495*18);
+    _cpMove = new Uint16Array(40320*10);
+    _udeMove = new Uint16Array(40320*10);
+
+    let phase="eo", i=0;
+    function step(){
+      const chunk=256;
+      let end;
+      if (phase==="eo"){
+        end=Math.min(2048, i+chunk);
+        for (; i<end; i++){
+          const st=_stateFromEO(i);
+          for (let m=0;m<18;m++){
+            const ns=_applyMoveClone(st, MOVES_18[m]);
+            _eoMove[i*18+m]=_eoCoordFromState(ns);
+          }
+        }
+        updateFn(`Move tables: EO ${end}/2048`);
+        if (i>=2048){ phase="co"; i=0; }
+      } else if (phase==="co"){
+        end=Math.min(2187, i+chunk);
+        for (; i<end; i++){
+          const st=_stateFromCO(i);
+          for (let m=0;m<18;m++){
+            const ns=_applyMoveClone(st, MOVES_18[m]);
+            _coMove[i*18+m]=_coCoordFromState(ns);
+          }
+        }
+        updateFn(`Move tables: CO ${end}/2187`);
+        if (i>=2187){ phase="uds"; i=0; }
+      } else if (phase==="uds"){
+        end=Math.min(495, i+chunk);
+        for (; i<end; i++){
+          const st=_stateFromUDS(i);
+          for (let m=0;m<18;m++){
+            const ns=_applyMoveClone(st, MOVES_18[m]);
+            _udsMove[i*18+m]=_udsCoordFromState(ns);
+          }
+        }
+        updateFn(`Move tables: UDS ${end}/495`);
+        if (i>=495){ phase="cp"; i=0; }
+      } else if (phase==="cp"){
+        end=Math.min(40320, i+128);
+        for (; i<end; i++){
+          const st=_stateFromCP(i);
+          for (let m=0;m<10;m++){
+            const ns=_applyMoveClone(st, MOVES_10[m]);
+            _cpMove[i*10+m]=_cpCoordFromState(ns);
+          }
+        }
+        updateFn(`Move tables: CP ${end}/40320`);
+        if (i>=40320){ phase="ude"; i=0; }
+      } else if (phase==="ude"){
+        end=Math.min(40320, i+128);
+        for (; i<end; i++){
+          const st=_stateFromUDE(i);
+          for (let m=0;m<10;m++){
+            const ns=_applyMoveClone(st, MOVES_10[m]);
+            _udeMove[i*10+m]=_udeCoordFromState(ns);
+          }
+        }
+        updateFn(`Move tables: UDE ${end}/40320`);
+        if (i>=40320){ resolve(); return; }
+      }
+      setTimeout(step, 0);
+    }
+    step();
+  });
+}
+
+function _buildPruningAsync(updateFn){
+  return new Promise((resolve)=>{
+    _updateLoading("Building pruning tables…");
+    _prEOUDS = new Uint8Array(2048*495);
+    _prCOUDS = new Uint8Array(2187*495);
+    _prCP = new Uint8Array(40320);
+    _prUDE = new Uint8Array(40320);
+    _prEOUDS.fill(0xFF); _prCOUDS.fill(0xFF); _prCP.fill(0xFF); _prUDE.fill(0xFF);
+
+    // Phase1 pruning from solved (eo=0, uds=0) etc
+    const q1 = new Int32Array(2048*495);
+    let qh=0, qt=0;
+    q1[qt++] = 0; // packed eo*495+uds
+    _prEOUDS[0]=0;
+
+    const q2 = new Int32Array(2187*495);
+    let q2h=0, q2t=0;
+    q2[q2t++]=0;
+    _prCOUDS[0]=0;
+
+    function bfs1(){
+      const chunk=20000;
+      let processed=0;
+      while (qh<qt && processed<chunk){
+        const idx=q1[qh++]; processed++;
+        const d=_prEOUDS[idx];
+        const eo=Math.floor(idx/495);
+        const uds=idx%495;
+        for (let m=0;m<18;m++){
+          const neo=_eoMove[eo*18+m];
+          const nuds=_udsMove[uds*18+m];
+          const nidx=neo*495+nuds;
+          if (_prEOUDS[nidx]===0xFF){
+            _prEOUDS[nidx]=d+1;
+            q1[qt++]=nidx;
+          }
+        }
+      }
+      updateFn(`Pruning: EO+UDS ${qh}/${qt}`);
+      if (qh<qt) { setTimeout(bfs1,0); return; }
+      setTimeout(bfs2,0);
+    }
+
+    function bfs2(){
+      const chunk=20000;
+      let processed=0;
+      while (q2h<q2t && processed<chunk){
+        const idx=q2[q2h++]; processed++;
+        const d=_prCOUDS[idx];
+        const co=Math.floor(idx/495);
+        const uds=idx%495;
+        for (let m=0;m<18;m++){
+          const nco=_coMove[co*18+m];
+          const nuds=_udsMove[uds*18+m];
+          const nidx=nco*495+nuds;
+          if (_prCOUDS[nidx]===0xFF){
+            _prCOUDS[nidx]=d+1;
+            q2[q2t++]=nidx;
+          }
+        }
+      }
+      updateFn(`Pruning: CO+UDS ${q2h}/${q2t}`);
+      if (q2h<q2t) { setTimeout(bfs2,0); return; }
+      setTimeout(bfs3,0);
+    }
+
+    function bfs3(){
+      // CP distance under phase2 moves (10)
+      const q = new Int32Array(40320);
+      let h=0,t=0;
+      q[t++]=0; _prCP[0]=0;
+      function step(){
+        const chunk=5000;
+        let processed=0;
+        while (h<t && processed<chunk){
+          const cur=q[h++]; processed++;
+          const d=_prCP[cur];
+          for (let m=0;m<10;m++){
+            const nxt=_cpMove[cur*10+m];
+            if (_prCP[nxt]===0xFF){
+              _prCP[nxt]=d+1;
+              q[t++]=nxt;
+            }
+          }
+        }
+        updateFn(`Pruning: CP ${h}/${t}`);
+        if (h<t) { setTimeout(step,0); return; }
+        setTimeout(bfs4,0);
+      }
+      step();
+    }
+
+    function bfs4(){
+      const q = new Int32Array(40320);
+      let h=0,t=0;
+      q[t++]=0; _prUDE[0]=0;
+      function step(){
+        const chunk=5000;
+        let processed=0;
+        while (h<t && processed<chunk){
+          const cur=q[h++]; processed++;
+          const d=_prUDE[cur];
+          for (let m=0;m<10;m++){
+            const nxt=_udeMove[cur*10+m];
+            if (_prUDE[nxt]===0xFF){
+              _prUDE[nxt]=d+1;
+              q[t++]=nxt;
+            }
+          }
+        }
+        updateFn(`Pruning: UDE ${h}/${t}`);
+        if (h<t) { setTimeout(step,0); return; }
+        resolve();
+      }
+      step();
+    }
+
+    bfs1();
+  });
+}
+
+async function ensureTablesBuilt() {
+  if (_tablesReady) return;
+  _showLoading("");
+  try{
+    await _buildMoveTablesAsync(_updateLoading);
+    await _buildPruningAsync(_updateLoading);
+    _tablesReady=true;
+    _hideLoading();
+  } catch (e){
+    console.error(e);
+    _updateLoading("Error building tables: " + (e?.message||e));
+    // keep overlay so user sees failure
+  }
+}
+
+// ---------- Updated heuristics ----------
+function h1(eo, co, uds) {
+  const a = _prEOUDS[eo*495 + uds];
+  const b = _prCOUDS[co*495 + uds];
   return Math.max(a, b);
 }
-
-function h2(cp, ude, ese, prCP, prUDE) {
-  return Math.max(prCP[idxCP_ESE(cp, ese)], prUDE[idxUDE_ESE(ude, ese)]);
+function h2(cp, ude) {
+  return Math.max(_prCP[cp], _prUDE[ude]);
 }
+
+function buildPhase1Pruning(){ return { prEOUDS:_prEOUDS, prCOUDS:_prCOUDS }; }
+
+function buildPhase2Pruning(){ return { prCP:_prCP, prUDE:_prUDE }; }
+
+// h1 overridden above
+
+// h2 overridden above
 
 function sameFace(a, b) {
   return a[0] === b[0];
 }
 
-function idaPhase1(startState, prEOCO, prUDSCO, maxDepth = 12) {
+function idaPhase1(startState, maxDepth = 12) {
   const path = [];
 
   function dfs(state, g, bound, lastMove) {
     const eo = getEOCoord(state.eo);
     const co = getCOCoord(state.co);
     const uds = getUDSliceCoord(state.ep);
-    const hv = h1(eo, co, uds, prEOCO, prUDSCO);
+    const hv = h1(eo, co, uds);
     if (g + hv > bound) return g + hv;
     if (eo === 0 && co === 0 && uds === 0) return true;
 
@@ -1309,7 +1630,7 @@ function idaPhase1(startState, prEOCO, prUDSCO, maxDepth = 12) {
   return null;
 }
 
-function idaPhase2(startStateG1, prCP, prUDE, maxDepth = 18) {
+function idaPhase2(startState, maxDepth = 18) {
   const path = [];
 
   function dfs(state, g, bound, lastMove) {
@@ -1442,29 +1763,27 @@ function scrambleTimer(i){
 }
 
 //  When clicked, a solution to the current scramble is found and displayed
-solveButton.onclick = () => {
-    saveScramble();
-    
-    solution = [];
-    solutionLine.textContent = "Solving...";
+solveButton.onclick = async () => {
+  try {
+    await ensureTablesBuilt();
+    const cubie = stickersToCubie();
+    // Phase 1
+    const p1 = idaPhase1(_clone(cubie), 12);
+    if (!p1) throw new Error("Phase 1 failed");
+    const mid = _clone(cubie);
+    for (const mv of p1) applyMoveCubie(mid, mv);
 
-    let moves;
-    try {
-        moves = kociembaSolveFromStickers();
-    } catch (e) {
-        alert(e.message);
-        return;
-    }
+    // Phase 2
+    const p2 = idaPhase2(mid, 18);
+    if (!p2) throw new Error("Phase 2 failed");
 
-    // Replace solution array with Kociemba output
-    solution = moves.slice();
-
-    // Reset cube to scrambled state (important!)
-    reconstructScramble();
-    updateCubeDisplay();
-
+    solution = [...p1, ...p2];
     solutionLine.textContent = solution.join(" ");
-};
+  } catch (e) {
+    solutionLine.textContent = (e?.message || String(e));
+    console.error(e);
+  }
+};;
 
 //  When clicked, cube solves itself turn by turn
 executeButton.onclick = function(){
@@ -1574,3 +1893,7 @@ function showCube(){
 
 setSolvedCube();
 updateCubeDisplay();
+
+
+// Build tables on page load (blocking UI with overlay until ready)
+window.addEventListener("load", () => { ensureTablesBuilt(); });
