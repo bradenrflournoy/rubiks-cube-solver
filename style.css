@@ -167,8 +167,11 @@ body::before{
 .sidepanel{
   display: grid;
   gap: 14px;
-  min-width: 240px;
+  /* shrink-wrap to the color picker width */
+  width: fit-content;
+  min-width: 0;
   align-content: center;
+  justify-items: stretch;
 }
 
 .sidepanel-title{
@@ -180,6 +183,7 @@ body::before{
 }
 
 .picker{
+  width: fit-content;
   padding: 14px;
   border-radius: 14px;
   background: rgba(0,0,0,0.18);
@@ -211,6 +215,7 @@ body::before{
 .pick-r{ background: red; }
 
 .solution{
+  width: 100%;
   padding: 14px;
   border-radius: 14px;
   background: rgba(0,0,0,0.18);
