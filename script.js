@@ -925,12 +925,20 @@ const BASE_MOVES = { U: MOVE_U, R: MOVE_R, F: MOVE_F, D: MOVE_D, L: MOVE_L, B: M
 
 function applyBaseMoveCubie(state, baseFace) {
   const mv = BASE_MOVES[baseFace];
-  const { cp, co, ep, eo } = state;
+  const cp = state.cp, co = state.co, ep = state.ep, eo = state.eo;
 
-  const ncp = new Array(8);
-  const nco = new Array(8);
-  const nep = new Array(12);
-  const neo = new Array(12);
+  // Reuse scratch buffers to avoid allocating 4 new arrays on every move.
+  // This is a big win for table-building and IDA* where moves are applied millions of times.
+  let tmp = state._tmp;
+  if (!tmp) {
+    tmp = state._tmp = {
+      cp: new Array(8),
+      co: new Array(8),
+      ep: new Array(12),
+      eo: new Array(12),
+    };
+  }
+  const ncp = tmp.cp, nco = tmp.co, nep = tmp.ep, neo = tmp.eo;
 
   for (let i = 0; i < 8; i++) {
     const src = mv.cpPerm[i];
@@ -943,8 +951,11 @@ function applyBaseMoveCubie(state, baseFace) {
     neo[i] = (eo[src] ^ mv.eoXor[i]) & 1;
   }
 
-  state.cp = ncp; state.co = nco;
-  state.ep = nep; state.eo = neo;
+  // Swap buffers (so next move reuses the old arrays as scratch).
+  state.cp = ncp; tmp.cp = cp;
+  state.co = nco; tmp.co = co;
+  state.ep = nep; tmp.ep = ep;
+  state.eo = neo; tmp.eo = eo;
 }
 
 function applyMoveCubie(state, move) {
@@ -1082,8 +1093,11 @@ const MOVES_18 = [
 // Phase 2 allowed moves
 const MOVES_10 = ["U","U2","U'","D","D2","D'","R2","L2","F2","B2"];
 
-// ---------- Fixed: structuredClone fallback ----------
-const _clone = (obj) => (typeof structuredClone === "function" ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)));
+// ---------- Faster cloning for cube-state objects ----------
+// NOTE: structuredClone/JSON cloning is *very* slow here; we only need shallow copies of 4 small arrays.
+function _cloneStateFast(st){
+  return { cp: st.cp.slice(), co: st.co.slice(), ep: st.ep.slice(), eo: st.eo.slice() };
+}
 
 // ---------- Fixed: cancelable timers for scramble/execute ----------
 let _pendingTimers = [];
@@ -1135,14 +1149,18 @@ function _hideLoading() {
 // ---------- Combinatorics ----------
 function unrankPerm8(idx) {
   // factoradic -> permutation of [0..7]
+  // Avoid Array.splice() in tight loops (it allocates and is slow).
   const items = [0,1,2,3,4,5,6,7];
+  let len = 8;
   const perm = new Array(8);
   let x = idx;
   for (let i = 7; i >= 0; i--) {
     const f = FACT[i];
-    const q = Math.floor(x / f);
+    const q = (x / f) | 0; // fast floor
     x = x % f;
-    perm[7 - i] = items.splice(q, 1)[0];
+    perm[7 - i] = items[q];
+    for (let j = q; j < len - 1; j++) items[j] = items[j + 1];
+    len--;
   }
   return perm;
 }
@@ -1203,8 +1221,11 @@ function _stateFromUDS(udsCoord){
   const otherIds=[0,1,2,3,4,5,6,7];
   // Fill positions with a deterministic arrangement
   let si=0, oi=0;
+    // turn pos list into a tiny lookup table (avoid .includes() inside the loop)
+  const isSlicePos = new Array(12).fill(false);
+  for (let j = 0; j < pos.length; j++) isSlicePos[pos[j]] = true;
   for (let i=0;i<12;i++){
-    if (pos.includes(i)) st.ep[i]=sliceIds[si++];
+    if (isSlicePos[i]) st.ep[i]=sliceIds[si++];
     else st.ep[i]=otherIds[oi++];
   }
   return st;
@@ -1228,7 +1249,7 @@ function _stateFromUDE(udeCoord){
 function _udeCoordFromState(st){ return getUDECoord(st.ep); }
 
 function _applyMoveClone(st, mv){
-  const ns=_clone(st);
+  const ns = _cloneStateFast(st);
   applyMoveCubie(ns, mv);
   return ns;
 }
@@ -1623,6 +1644,7 @@ resetButton.onclick = function(){
     lFace = [o, o, o, o, o, o, o, o];
     rFace = [r, r, r, r, r, r, r, r];
     updateCubeDisplay();
+    if (typeof solutionLine !== 'undefined' && solutionLine) solutionLine.textContent = "";
 }
 
 //  When clicked, cube is randomly scrambled
@@ -1684,10 +1706,10 @@ solveButton.onclick = async () => {
 
     const cubie = stickersToCubie();
 
-    const p1 = idaPhase1(_clone(cubie), 12);
+    const p1 = idaPhase1(_cloneStateFast(cubie), 12);
     if (!p1) throw new Error("Phase 1 failed");
 
-    const mid = _clone(cubie);
+    const mid = _cloneStateFast(cubie);
     for (const mv of p1) applyMoveCubie(mid, mv);
     
     const p2 = idaPhase2(mid, 18);
