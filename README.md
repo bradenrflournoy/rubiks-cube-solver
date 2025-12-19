@@ -3,7 +3,7 @@
 Interactive **3×3 Rubik’s Cube** tool: paint a scramble on a 2D net, perform face turns, and view a computed solution sequence.  
 Built with **HTML, CSS, JavaScript** (no frameworks). **Runs in the browser.**
 
-**Live demo:** https://YOUR_USERNAME.github.io/rubiks-cube-solver/
+**Live demo:** https://bradenrflournoy.github.io/rubiks-cube-solver/
 
 ## Features
 - **Clickable net** for all six faces (U, D, F, B, L, R) with a **color picker** (G/B/W/Y/O/R).  
